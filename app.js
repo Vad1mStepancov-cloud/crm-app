@@ -1,8 +1,13 @@
+/* =========================================================
+   CRM - JavaScript логика
+   ========================================================= */
+
 var STORAGE = { orders: 'crm_orders', users: 'crm_users', session: 'crm_session' };
 var currentUser = null;
 var allOrders = [];
 var sortState = { field: 'datetime', dir: 'desc' };
 
+/* ============ ПАРОЛИ ============ */
 function hashPassword(pwd) {
   var hash = 0;
   for (var i = 0; i < pwd.length; i++) {
@@ -11,9 +16,17 @@ function hashPassword(pwd) {
   }
   return 'h' + hash;
 }
-function getUsers() { try { return JSON.parse(localStorage.getItem(STORAGE.users) || '{}'); } catch(e) { return {}; } }
-function saveUsers(u) { localStorage.setItem(STORAGE.users, JSON.stringify(u)); }
 
+function getUsers() {
+  try { return JSON.parse(localStorage.getItem(STORAGE.users) || '{}'); }
+  catch (e) { return {}; }
+}
+
+function saveUsers(u) {
+  localStorage.setItem(STORAGE.users, JSON.stringify(u));
+}
+
+/* ============ АВТОРИЗАЦИЯ ============ */
 function switchAuth(mode) {
   document.getElementById('tabLogin').classList.toggle('active', mode === 'login');
   document.getElementById('tabRegister').classList.toggle('active', mode === 'register');
@@ -27,7 +40,12 @@ function handleRegister(e) {
   var pass = document.getElementById('regPass').value;
   var role = document.getElementById('regRole').value;
   var users = getUsers();
-  if (users[login]) { toast('Пользователь уже существует', 'error'); return; }
+
+  if (users[login]) {
+    toast('Пользователь уже существует', 'error');
+    return;
+  }
+
   users[login] = { password: hashPassword(pass), role: role, created: Date.now() };
   saveUsers(users);
   toast('Регистрация успешна! Теперь войдите.', 'success');
@@ -40,15 +58,19 @@ function handleLogin(e) {
   var login = document.getElementById('loginUser').value.trim();
   var pass = document.getElementById('loginPass').value;
   var users = getUsers();
+
+  // Bootstrap: если пользователей нет — создаём admin/admin
   if (Object.keys(users).length === 0) {
     users['admin'] = { password: hashPassword('admin'), role: 'admin', created: Date.now() };
     saveUsers(users);
   }
+
   var user = users[login];
   if (!user || user.password !== hashPassword(pass)) {
     toast('Неверный логин или пароль', 'error');
     return;
   }
+
   currentUser = { login: login, role: user.role };
   localStorage.setItem(STORAGE.session, JSON.stringify(currentUser));
   enterApp();
@@ -73,20 +95,33 @@ function enterApp() {
 function checkSession() {
   var s = localStorage.getItem(STORAGE.session);
   if (s) {
-    try { currentUser = JSON.parse(s); enterApp(); } catch(e) {}
+    try {
+      currentUser = JSON.parse(s);
+      enterApp();
+    } catch (e) {}
   }
 }
 
-function loadOrders() { try { allOrders = JSON.parse(localStorage.getItem(STORAGE.orders) || '[]'); } catch(e) { allOrders = []; } }
-function saveOrders() { localStorage.setItem(STORAGE.orders, JSON.stringify(allOrders)); }
+/* ============ ЗАЯВКИ ============ */
+function loadOrders() {
+  try { allOrders = JSON.parse(localStorage.getItem(STORAGE.orders) || '[]'); }
+  catch (e) { allOrders = []; }
+}
 
+function saveOrders() {
+  localStorage.setItem(STORAGE.orders, JSON.stringify(allOrders));
+}
+
+/* ============ ФИЛЬТРЫ И СОРТИРОВКА ============ */
 function getFilteredOrders() {
   var search = document.getElementById('searchInput').value.trim().toLowerCase();
   var status = document.getElementById('filterStatus').value;
   var df = document.getElementById('filterDateFrom').value;
   var dt = document.getElementById('filterDateTo').value;
   var sort = document.getElementById('sortSelect').value;
+
   var result = allOrders.slice();
+
   if (search) {
     result = result.filter(function(o) {
       return (o.clientName || '').toLowerCase().indexOf(search) !== -1 ||
@@ -94,15 +129,17 @@ function getFilteredOrders() {
              (o.address || '').toLowerCase().indexOf(search) !== -1;
     });
   }
+
   if (status) result = result.filter(function(o) { return o.status === status; });
-  if (df) result = result.filter(function(o) { return o.datetime && o.datetime.slice(0,10) >= df; });
-  if (dt) result = result.filter(function(o) { return o.datetime && o.datetime.slice(0,10) <= dt; });
+  if (df) result = result.filter(function(o) { return o.datetime && o.datetime.slice(0, 10) >= df; });
+  if (dt) result = result.filter(function(o) { return o.datetime && o.datetime.slice(0, 10) <= dt; });
+
   if (sort) {
     var parts = sort.split('-');
     var field = parts[0], dir = parts[1];
     result.sort(function(a, b) {
       var va = a[field], vb = b[field];
-      if (['datetime','totalAmount','expense','toGive'].indexOf(field) !== -1) {
+      if (['datetime', 'totalAmount', 'expense', 'toGive'].indexOf(field) !== -1) {
         va = field === 'datetime' ? new Date(va).getTime() : Number(va) || 0;
         vb = field === 'datetime' ? new Date(vb).getTime() : Number(vb) || 0;
       } else {
@@ -114,6 +151,7 @@ function getFilteredOrders() {
       return 0;
     });
   }
+
   return result;
 }
 
@@ -133,26 +171,38 @@ function sortBy(field) {
   render();
 }
 
+/* ============ ФОРМАТИРОВАНИЕ ============ */
 function formatDate(dt) {
   if (!dt) return '—';
   var d = new Date(dt);
-  return d.toLocaleString('ru-RU', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
-}
-function formatMoney(n) {
-  return (Number(n) || 0).toLocaleString('ru-RU', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' ₽';
-}
-function escapeHtml(str) {
-  return String(str || '').replace(/[&<>"']/g, function(c) {
-    return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];
+  return d.toLocaleString('ru-RU', {
+    day: '2-digit', month: '2-digit', year: 'numeric',
+    hour: '2-digit', minute: '2-digit'
   });
 }
 
+function formatMoney(n) {
+  return (Number(n) || 0).toLocaleString('ru-RU', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2
+  }) + ' ₽';
+}
+
+function escapeHtml(str) {
+  return String(str || '').replace(/[&<>"']/g, function(c) {
+    return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+  });
+}
+
+/* ============ РЕНДЕР ТАБЛИЦЫ ============ */
 function render() {
   var orders = getFilteredOrders();
   var tbody = document.getElementById('ordersTable');
   var empty = document.getElementById('emptyMsg');
+
   tbody.innerHTML = '';
   empty.style.display = orders.length === 0 ? 'block' : 'none';
+
   orders.forEach(function(o) {
     var tr = document.createElement('tr');
     var statusClass = 'status status-' + o.status.toLowerCase().replace(' ', '-');
@@ -172,9 +222,11 @@ function render() {
       '</td>';
     tbody.appendChild(tr);
   });
+
   var total = orders.reduce(function(s, o) { return s + (Number(o.totalAmount) || 0); }, 0);
   var expense = orders.reduce(function(s, o) { return s + (Number(o.expense) || 0); }, 0);
   var profit = total - expense;
+
   document.getElementById('statCount').textContent = orders.length;
   document.getElementById('statTotal').textContent = formatMoney(total);
   document.getElementById('statExpense').textContent = formatMoney(expense);
@@ -182,6 +234,7 @@ function render() {
   document.getElementById('statProfit').style.color = profit >= 0 ? '#059669' : '#dc2626';
 }
 
+/* ============ МОДАЛКА СОЗДАНИЯ / РЕДАКТИРОВАНИЯ ============ */
 function openCreateModal() {
   document.getElementById('orderForm').reset();
   document.getElementById('editId').value = '';
@@ -189,12 +242,15 @@ function openCreateModal() {
   document.getElementById('modalTitle').textContent = 'Новая заявка';
   var now = new Date();
   now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
-  document.getElementById('datetime').value = now.toISOString().slice(0,16);
+  document.getElementById('datetime').value = now.toISOString().slice(0, 16);
   document.getElementById('orderModal').classList.add('active');
 }
 
-function closeModal() { document.getElementById('orderModal').classList.remove('active'); }
+function closeModal() {
+  document.getElementById('orderModal').classList.remove('active');
+}
 
+// Автоподсчёт "к сдаче" при вводе суммы и расхода
 document.addEventListener('input', function(e) {
   if (e.target.id === 'totalAmount' || e.target.id === 'expense') {
     var total = parseFloat(document.getElementById('totalAmount').value) || 0;
@@ -205,8 +261,11 @@ document.addEventListener('input', function(e) {
 
 function editOrder(id) {
   var o = null;
-  for (var i = 0; i < allOrders.length; i++) if (allOrders[i].id === id) { o = allOrders[i]; break; }
+  for (var i = 0; i < allOrders.length; i++) {
+    if (allOrders[i].id === id) { o = allOrders[i]; break; }
+  }
   if (!o) return;
+
   document.getElementById('editId').value = o.id;
   document.getElementById('clientName').value = o.clientName;
   document.getElementById('clientPhone').value = o.clientPhone;
@@ -236,6 +295,7 @@ function saveOrder(e) {
     updatedAt: Date.now(),
     updatedBy: currentUser.login
   };
+
   if (editId) {
     allOrders = allOrders.map(function(o) { return o.id === order.id ? order : o; });
     toast('Заявка обновлена', 'success');
@@ -245,6 +305,7 @@ function saveOrder(e) {
     allOrders.push(order);
     toast('Заявка добавлена', 'success');
   }
+
   saveOrders();
   closeModal();
   render();
@@ -258,10 +319,14 @@ function deleteOrder(id) {
   toast('Заявка удалена', 'success');
 }
 
+/* ============ ПЕЧАТЬ ОДНОЙ ЗАЯВКИ ============ */
 function printOrder(id) {
   var o = null;
-  for (var i = 0; i < allOrders.length; i++) if (allOrders[i].id === id) { o = allOrders[i]; break; }
+  for (var i = 0; i < allOrders.length; i++) {
+    if (allOrders[i].id === id) { o = allOrders[i]; break; }
+  }
   if (!o) return;
+
   document.getElementById('printContent').innerHTML =
     '<h3>Заявка №' + o.id + '</h3>' +
     '<div style="margin-top:16px; line-height:1.8;">' +
@@ -279,27 +344,38 @@ function printOrder(id) {
       '<button class="btn-primary" style="flex:1;" onclick="printCurrentModal()">🖨 Печать</button>' +
       '<button class="btn-secondary" onclick="document.getElementById(\'printModal\').classList.remove(\'active\')">Закрыть</button>' +
     '</div>';
+
   document.getElementById('printModal').classList.add('active');
 }
 
 function printCurrentModal() {
   var content = document.getElementById('printContent').innerHTML;
   var w = window.open('', '', 'width=600,height=700');
-  w.document.write('<html><head><title>Заявка</title><style>body{font-family:Arial;padding:20px;line-height:1.6;}h3{margin-bottom:16px;}</style></head><body>' + content + '</body></html>');
+  w.document.write(
+    '<html><head><title>Заявка</title>' +
+    '<style>body{font-family:Arial;padding:20px;line-height:1.6;}h3{margin-bottom:16px;}</style>' +
+    '</head><body>' + content + '</body></html>'
+  );
   w.document.close();
   w.focus();
   setTimeout(function() { w.print(); }, 300);
 }
 
+/* ============ ЭКСПОРТ / ИМПОРТ ============ */
 function exportCSV() {
   var orders = getFilteredOrders();
-  if (orders.length === 0) { toast('Нет данных для экспорта', 'error'); return; }
-  var headers = ['ID','Дата','Имя','Телефон','Адрес','Статус','Сумма','Расход','К сдаче'];
+  if (orders.length === 0) {
+    toast('Нет данных для экспорта', 'error');
+    return;
+  }
+  var headers = ['ID', 'Дата', 'Имя', 'Телефон', 'Адрес', 'Статус', 'Сумма', 'Расход', 'К сдаче'];
   var rows = orders.map(function(o) {
     return [o.id, o.datetime, o.clientName, o.clientPhone, o.address, o.status, o.totalAmount, o.expense, o.toGive];
   });
   var csv = '\uFEFF' + [headers].concat(rows).map(function(r) {
-    return r.map(function(v) { return '"' + String(v == null ? '' : v).replace(/"/g, '""') + '"'; }).join(';');
+    return r.map(function(v) {
+      return '"' + String(v == null ? '' : v).replace(/"/g, '""') + '"';
+    }).join(';');
   }).join('\n');
   downloadFile(csv, 'orders_' + Date.now() + '.csv', 'text/csv;charset=utf-8');
   toast('CSV экспортирован', 'success');
@@ -323,7 +399,10 @@ function importJSON(e) {
       allOrders.forEach(function(o) { existing[o.id] = true; });
       var added = 0;
       data.forEach(function(o) {
-        if (!existing[o.id]) { allOrders.push(o); added++; }
+        if (!existing[o.id]) {
+          allOrders.push(o);
+          added++;
+        }
       });
       saveOrders();
       render();
@@ -340,4 +419,23 @@ function downloadFile(content, filename, type) {
   var blob = new Blob([content], { type: type });
   var url = URL.createObjectURL(blob);
   var a = document.createElement('a');
-  a
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+}
+
+/* ============ УВЕДОМЛЕНИЯ ============ */
+function toast(msg, type) {
+  type = type || '';
+  var el = document.getElementById('toast');
+  el.textContent = msg;
+  el.className = 'toast show ' + type;
+  clearTimeout(el._t);
+  el._t = setTimeout(function() { el.className = 'toast'; }, 2500);
+}
+
+/* ============ ИНИЦИАЛИЗАЦИЯ ============ */
+checkSession();
