@@ -3,7 +3,7 @@
    ========================================================= */
 
 var SUPABASE_URL = 'https://grohsnvinhidswzieuwo.supabase.co';
-var SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imdyb2hzbnZpbmhpZHN3emlldXdvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTAyNDA1MDcsImV4cCI6MjEwNTgxNjUwN30.bwAsw8BV-DUtpF23D1r1CTMJuvzejAQCi0qK2NfZScA;
+var SUPABASE_KEY = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imdyb2hzbnZpbmhpZHN3emlldXdvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTAyNDA1MDcsImV4cCI6MjEwNTgxNjUwN30.bwAsw8BV-DUtpF23D1r1CTMJuvzejAQCi0qK2NfZScA
 var currentUser = null;
 var allOrders = [];
 var allBrigadiers = [];
