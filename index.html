@@ -2,8 +2,9 @@
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>CRM - Управление заявками</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#4f46e5">
+<title>CRM - Заявки</title>
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -15,95 +16,207 @@
     <button id="tabRegister" onclick="switchAuth('register')">Регистрация</button>
   </div>
   <form id="loginForm" onsubmit="handleLogin(event)">
-    <div style="margin-bottom:12px;"><label>Логин</label><input type="text" id="loginUser" required></div>
-    <div style="margin-bottom:16px;"><label>Пароль</label><input type="password" id="loginPass" required></div>
-    <button type="submit" class="btn-primary" style="width:100%;">Войти</button>
-    <p style="margin-top:14px; font-size:12px; color:#888; text-align:center;">Первый вход: <b>admin / admin</b></p>
+    <div class="field"><label>Логин</label><input type="text" id="loginUser" required></div>
+    <div class="field"><label>Пароль</label><input type="password" id="loginPass" required></div>
+    <button type="submit" class="btn-primary btn-block">Войти</button>
   </form>
   <form id="registerForm" style="display:none;" onsubmit="handleRegister(event)">
-    <div style="margin-bottom:12px;"><label>Логин</label><input type="text" id="regUser" required minlength="3"></div>
-    <div style="margin-bottom:12px;"><label>Пароль (мин. 4 символа)</label><input type="password" id="regPass" required minlength="4"></div>
-    <div style="margin-bottom:16px;"><label>Роль</label><select id="regRole"><option value="user">Пользователь</option><option value="admin">Администратор</option></select></div>
-    <button type="submit" class="btn-primary" style="width:100%;">Зарегистрироваться</button>
+    <div class="field"><label>Логин</label><input type="text" id="regUser" required minlength="3"></div>
+    <div class="field"><label>Пароль</label><input type="password" id="regPass" required minlength="4"></div>
+    <div class="field"><label>Роль</label><select id="regRole"><option value="user">Пользователь</option><option value="admin">Администратор</option></select></div>
+    <button type="submit" class="btn-primary btn-block">Зарегистрироваться</button>
   </form>
 </div>
 
 <div id="app" class="container" style="display:none;">
   <div class="header">
-    <h1>📋 CRM - Управление заявками</h1>
-    <div class="user-badge no-print">
-      <div>👤 <span id="currentUserName">—</span></div>
-      <button class="btn-secondary" style="padding:6px 12px; font-size:12px;" onclick="logout()">Выйти</button>
+    <h1>📋 CRM Заявки</h1>
+    <div class="user-badge">
+      <span id="currentUserName">—</span>
+      <button class="btn-logout" onclick="logout()">Выйти</button>
     </div>
   </div>
+
   <div class="summary">
-    <div class="stat"><div class="stat-label">Всего заявок</div><div class="stat-value" id="statCount">0</div></div>
-    <div class="stat"><div class="stat-label">Общая сумма</div><div class="stat-value" id="statTotal">0 ₽</div></div>
-    <div class="stat"><div class="stat-label">Общий расход</div><div class="stat-value" id="statExpense">0 ₽</div></div>
-    <div class="stat"><div class="stat-label">Прибыль</div><div class="stat-value" id="statProfit">0 ₽</div></div>
+    <div class="stat"><div class="stat-label">Заявок</div><div class="stat-value" id="statCount">0</div></div>
+    <div class="stat"><div class="stat-label">Сумма общая</div><div class="stat-value" id="statTotal">0 ₽</div></div>
+    <div class="stat"><div class="stat-label">Подписано</div><div class="stat-value" id="statSigned" style="color:#059669;">0 ₽</div></div>
+    <div class="stat"><div class="stat-label">Аванс</div><div class="stat-value" id="statAdvance" style="color:#0891b2;">0 ₽</div></div>
+    <div class="stat"><div class="stat-label">Отказ</div><div class="stat-value" id="statRejected" style="color:#dc2626;">0 ₽</div></div>
   </div>
-  <div class="actions-bar no-print">
-    <button class="btn-primary" onclick="openCreateModal()">+ Новая заявка</button>
-    <button class="btn-secondary" onclick="exportCSV()">📤 Экспорт CSV</button>
-    <button class="btn-secondary" onclick="exportJSON()">💾 Экспорт JSON</button>
-    <button class="btn-secondary" onclick="window.print()">🖨️ Печать списка</button>
-    <label class="btn-secondary" style="cursor:pointer; display:inline-flex; align-items:center;">📥 Импорт JSON<input type="file" accept=".json" style="display:none;" onchange="importJSON(event)"></label>
+
+  <div class="tabs-bar">
+    <button class="tab-btn active" onclick="switchPage('orders', this)">📋 Заявки</button>
+    <button class="tab-btn" onclick="switchPage('brigadiers', this)">👥 Бригадиры</button>
+    <button class="tab-btn" onclick="switchPage('analytics', this)">📊 Аналитика</button>
   </div>
-  <div class="filters no-print">
-    <div><label>🔍 Поиск</label><input type="text" id="searchInput" placeholder="Имя, телефон, адрес..." oninput="render()"></div>
-    <div><label>Статус</label><select id="filterStatus" onchange="render()"><option value="">Все</option><option>Новая</option><option>В работе</option><option>Выполнена</option><option>Отменена</option></select></div>
-    <div><label>Дата от</label><input type="date" id="filterDateFrom" onchange="render()"></div>
-    <div><label>Дата до</label><input type="date" id="filterDateTo" onchange="render()"></div>
-    <div><label>Сортировка</label><select id="sortSelect" onchange="render()"><option value="datetime-desc">Дата ↓</option><option value="datetime-asc">Дата ↑</option><option value="totalAmount-desc">Сумма ↓</option><option value="totalAmount-asc">Сумма ↑</option><option value="clientName-asc">Имя A-Z</option><option value="clientName-desc">Имя Z-A</option></select></div>
-    <div><button class="btn-secondary" style="width:100%;" onclick="resetFilters()">Сбросить</button></div>
+
+  <!-- СТРАНИЦА: ЗАЯВКИ -->
+  <div id="page-orders">
+    <div class="actions-bar">
+      <button class="btn-primary" onclick="openCreateModal()">+ Новая заявка</button>
+      <button class="btn-secondary" onclick="exportCSV()">📤 CSV</button>
+      <button class="btn-secondary" onclick="window.print()">🖨 Печать</button>
+    </div>
+
+    <div class="filters">
+      <div class="field"><label>🔍 Поиск</label><input type="text" id="searchInput" placeholder="Имя, телефон, адрес..." oninput="render()"></div>
+      <div class="field"><label>Статус</label>
+        <select id="filterStatus" onchange="render()">
+          <option value="">Все</option>
+          <option>Принят</option>
+          <option>Смета</option>
+          <option>Подписан</option>
+          <option>Отказ</option>
+        </select>
+      </div>
+      <div class="field"><label>Тип</label>
+        <select id="filterType" onchange="render()">
+          <option value="">Все</option>
+          <option>Под ключ</option>
+          <option>Частичка</option>
+          <option>СУ</option>
+        </select>
+      </div>
+      <div class="field"><label>Бригадир</label>
+        <select id="filterBrigadier" onchange="render()"><option value="">Все</option></select>
+      </div>
+      <div class="field"><label>Источник</label>
+        <select id="filterSource" onchange="render()">
+          <option value="">Все</option>
+          <option>Авито</option>
+          <option>Сарафанка</option>
+        </select>
+      </div>
+      <div class="field"><button class="btn-secondary btn-block" onclick="resetFilters()">Сбросить</button></div>
+    </div>
+
+    <div class="table-wrap desktop-only">
+      <table>
+        <thead>
+          <tr>
+            <th>Дата</th>
+            <th>Тип</th>
+            <th>Клиент</th>
+            <th>Телефон</th>
+            <th>Адрес</th>
+            <th>Бригадир</th>
+            <th>Источник</th>
+            <th>Статус</th>
+            <th>Смета</th>
+            <th>Аванс</th>
+            <th>Действия</th>
+          </tr>
+        </thead>
+        <tbody id="ordersTable"></tbody>
+      </table>
+    </div>
+
+    <div class="cards mobile-only" id="ordersCards"></div>
+    <div class="empty" id="emptyMsg" style="display:none;">Заявок пока нет</div>
+
+    <div class="mobile-nav mobile-only">
+      <button onclick="openCreateModal()" class="mnav-main">+ Заявка</button>
+      <button onclick="exportCSV()">📤 CSV</button>
+    </div>
   </div>
-  <div class="table-wrap">
-    <table>
-      <thead>
-        <tr>
-          <th onclick="sortBy('datetime')">Дата</th>
-          <th onclick="sortBy('clientName')">Клиент</th>
-          <th onclick="sortBy('clientPhone')">Телефон</th>
-          <th onclick="sortBy('address')">Адрес</th>
-          <th onclick="sortBy('status')">Статус</th>
-          <th onclick="sortBy('totalAmount')">Сумма</th>
-          <th onclick="sortBy('expense')">Расход</th>
-          <th onclick="sortBy('toGive')">К сдаче</th>
-          <th class="no-print">Действия</th>
-        </tr>
-      </thead>
-      <tbody id="ordersTable"></tbody>
-    </table>
+
+  <!-- СТРАНИЦА: БРИГАДИРЫ -->
+  <div id="page-brigadiers" style="display:none;">
+    <div class="actions-bar">
+      <button class="btn-primary" onclick="openBrigadierModal()">+ Добавить бригадира</button>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Имя</th>
+            <th>Телефон</th>
+            <th>Процент</th>
+            <th>Заявок</th>
+            <th>Сумма</th>
+            <th>Действия</th>
+          </tr>
+        </thead>
+        <tbody id="brigadiersTable"></tbody>
+      </table>
+    </div>
   </div>
-  <div class="empty" id="emptyMsg" style="display:none;">Заявок пока нет</div>
+
+  <!-- СТРАНИЦА: АНАЛИТИКА -->
+  <div id="page-analytics" style="display:none;">
+    <div class="summary">
+      <div class="stat"><div class="stat-label">Всего заявок</div><div class="stat-value" id="anaCount">0</div></div>
+      <div class="stat"><div class="stat-label">Общая сумма смет</div><div class="stat-value" id="anaTotal">0 ₽</div></div>
+      <div class="stat"><div class="stat-label">Подписано</div><div class="stat-value" id="anaSigned">0 ₽</div></div>
+      <div class="stat"><div class="stat-label">Отказов</div><div class="stat-value" id="anaRejected">0</div></div>
+    </div>
+    <div class="card">
+      <h3>Заявки по источникам</h3>
+      <div id="anaSources" style="margin-top:12px;"></div>
+    </div>
+    <div class="card">
+      <h3>Заявки по бригадирам</h3>
+      <div id="anaBrigadiers" style="margin-top:12px;"></div>
+    </div>
+    <div class="card">
+      <h3>Заявки по типам</h3>
+      <div id="anaTypes" style="margin-top:12px;"></div>
+    </div>
+  </div>
 </div>
 
-<div class="modal-bg no-print" id="orderModal">
+<!-- МОДАЛКА: заявка -->
+<div class="modal-bg" id="orderModal">
   <div class="modal">
     <h3 id="modalTitle">Новая заявка</h3>
     <form id="orderForm" onsubmit="saveOrder(event)">
       <input type="hidden" id="editId">
-      <div style="display:grid; gap:12px;">
-        <div><label>Имя клиента</label><input type="text" id="clientName" required></div>
-        <div><label>Телефон</label><input type="tel" id="clientPhone" required></div>
-        <div><label>Адрес</label><input type="text" id="address" required></div>
-        <div><label>Дата и время</label><input type="datetime-local" id="datetime" required></div>
-        <div><label>Статус</label><select id="status"><option>Новая</option><option>В работе</option><option>Выполнена</option><option>Отменена</option></select></div>
-        <div><label>Общая сумма (₽)</label><input type="number" id="totalAmount" step="0.01" min="0" required></div>
-        <div><label>Расход (₽)</label><input type="number" id="expense" step="0.01" min="0" value="0" required></div>
-        <div><label>К сдаче (₽)</label><input type="number" id="toGive" step="0.01" readonly style="background:#f3f4f6;"></div>
+      <div class="field"><label>Тип заказа</label>
+        <select id="orderType"><option>Под ключ</option><option>Частичка</option><option>СУ</option></select>
       </div>
-      <div style="display:flex; gap:8px; margin-top:20px;">
-        <button type="submit" class="btn-primary" style="flex:1;">Сохранить</button>
+      <div class="field"><label>Имя клиента</label><input type="text" id="clientName" required></div>
+      <div class="field"><label>Телефон</label><input type="tel" id="clientPhone" required></div>
+      <div class="field"><label>Адрес</label><input type="text" id="address" required></div>
+      <div class="field"><label>Дата и время</label><input type="datetime-local" id="datetime" required></div>
+      <div class="field"><label>Бригадир</label><select id="brigadierSelect"><option value="">— не выбран —</option></select></div>
+      <div class="field"><label>Источник</label>
+        <select id="source"><option>Сарафанка</option><option>Авито</option></select>
+      </div>
+      <div class="field"><label>Статус</label>
+        <select id="status"><option>Принят</option><option>Смета</option><option>Подписан</option><option>Отказ</option></select>
+      </div>
+      <div class="field"><label>Смета (₽)</label><input type="number" id="totalAmount" step="0.01" min="0" value="0" required></div>
+      <div class="field"><label>Аванс (₽)</label><input type="number" id="advanceAmount" step="0.01" min="0" value="0"></div>
+      <div class="field"><label>Расход (₽)</label><input type="number" id="expense" step="0.01" min="0" value="0"></div>
+      <div class="field"><label>К сдаче (₽)</label><input type="number" id="toGive" step="0.01" readonly class="readonly"></div>
+      <div class="field"><label>Заметка</label><textarea id="note" rows="2"></textarea></div>
+      <div class="modal-actions">
+        <button type="submit" class="btn-primary">Сохранить</button>
         <button type="button" class="btn-secondary" onclick="closeModal()">Отмена</button>
       </div>
     </form>
   </div>
 </div>
 
-<div class="modal-bg no-print" id="printModal"><div class="modal" id="printContent"></div></div>
-<div class="toast" id="toast"></div>
+<!-- МОДАЛКА: бригадир -->
+<div class="modal-bg" id="brigadierModal">
+  <div class="modal">
+    <h3 id="brigTitle">Новый бригадир</h3>
+    <form id="brigadierForm" onsubmit="saveBrigadier(event)">
+      <input type="hidden" id="editBrigId">
+      <div class="field"><label>Имя</label><input type="text" id="brigName" required></div>
+      <div class="field"><label>Телефон</label><input type="tel" id="brigPhone"></div>
+      <div class="field"><label>Процент (%)</label><input type="number" id="brigPercent" min="0" max="100" value="30"></div>
+      <div class="modal-actions">
+        <button type="submit" class="btn-primary">Сохранить</button>
+        <button type="button" class="btn-secondary" onclick="closeBrigadierModal()">Отмена</button>
+      </div>
+    </form>
+  </div>
+</div>
 
+<div class="toast" id="toast"></div>
 <script src="app.js"></script>
 </body>
 </html>
