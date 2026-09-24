@@ -1,5 +1,8 @@
 * { box-sizing: border-box; margin: 0; padding: 0; }
 body { font-family: -apple-system, Segoe UI, Roboto, sans-serif; background: #f0f2f5; padding: 16px; color: #333; }
+.mobile-only { display: none; }
+.desktop-only { display: block; }
+.mobile-nav { display: none; }
 .container { max-width: 1400px; margin: 0 auto; }
 .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 12px; }
 h1 { color: #1a1a2e; font-size: 22px; }
