@@ -158,11 +158,16 @@ function switchPage(name, btn) {
   if (name === 'analytics') renderAnalytics();
 }/* ============ ФИЛЬТРЫ ============ */
 function getFilteredOrders() {
-  var search = (document.getElementById('searchInput').value || '').trim().toLowerCase();
-  var status = document.getElementById('filterStatus').value;
-  var type = document.getElementById('filterType').value;
-  var brig = document.getElementById('filterBrigadier').value;
-  var src = document.getElementById('filterSource').value;
+  var elSearch = document.getElementById('searchInput');
+  var elStatus = document.getElementById('filterStatus');
+  var elType = document.getElementById('filterType');
+  var elBrig = document.getElementById('filterBrigadier');
+  var elSrc = document.getElementById('filterSource');
+  var search = (elSearch ? elSearch.value : '').trim().toLowerCase();
+  var status = elStatus ? elStatus.value : '';
+  var type = elType ? elType.value : '';
+  var brig = elBrig ? elBrig.value : '';
+  var src = elSrc ? elSrc.value : '';
 
   return allOrders.filter(function(o) {
     if (search && !((o.clientName || '').toLowerCase().indexOf(search) !== -1 ||
