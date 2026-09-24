@@ -1,5 +1,5 @@
 /* =========================================================
-   CRM - работает через Supabase (общая база для всех)
+   CRM - Supabase, версия с бригадирами
    ========================================================= */
 
 var SUPABASE_URL = 'https://grohsnvinhidswzieuwo.supabase.co';
@@ -7,9 +7,9 @@ var SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSI
 
 var currentUser = null;
 var allOrders = [];
-var sortState = { field: 'datetime', dir: 'desc' };
+var allBrigadiers = [];
 
-/* ============ SUPABASE REST ============ */
+/* ============ API ============ */
 function supa(path, options) {
   options = options || {};
   var headers = {
@@ -23,15 +23,12 @@ function supa(path, options) {
     headers: headers,
     body: options.body ? JSON.stringify(options.body) : undefined
   }).then(function(r) {
-    if (!r.ok) {
-      return r.text().then(function(t) { throw new Error('HTTP ' + r.status + ': ' + t); });
-    }
+    if (!r.ok) return r.text().then(function(t) { throw new Error('HTTP ' + r.status + ': ' + t); });
     if (r.status === 204) return null;
     return r.json();
   });
 }
 
-/* ============ ПАРОЛИ ============ */
 function hashPassword(pwd) {
   var hash = 0;
   for (var i = 0; i < pwd.length; i++) {
@@ -54,15 +51,11 @@ function handleRegister(e) {
   var login = document.getElementById('regUser').value.trim();
   var pass = document.getElementById('regPass').value;
   var role = document.getElementById('regRole').value;
-
-  supa('/crm_users?login=eq.' + encodeURIComponent(login), { method: 'GET' }).then(function(rows) {
+  supa('/crm_users?login=eq.' + encodeURIComponent(login)).then(function(rows) {
     if (rows.length > 0) throw new Error('Пользователь уже существует');
-    return supa('/crm_users', {
-      method: 'POST',
-      body: { login: login, password_hash: hashPassword(pass), role: role }
-    });
+    return supa('/crm_users', { method: 'POST', body: { login: login, password_hash: hashPassword(pass), role: role } });
   }).then(function() {
-    toast('Регистрация успешна! Теперь войдите.', 'success');
+    toast('Регистрация успешна!', 'success');
     switchAuth('login');
     document.getElementById('loginUser').value = login;
   }).catch(function(err) { toast(err.message, 'error'); });
@@ -72,8 +65,7 @@ function handleLogin(e) {
   e.preventDefault();
   var login = document.getElementById('loginUser').value.trim();
   var pass = document.getElementById('loginPass').value;
-
-  supa('/crm_users?login=eq.' + encodeURIComponent(login), { method: 'GET' }).then(function(rows) {
+  supa('/crm_users?login=eq.' + encodeURIComponent(login)).then(function(rows) {
     if (!rows.length) throw new Error('Пользователь не найден');
     var u = rows[0];
     if (u.password_hash !== hashPassword(pass)) throw new Error('Неверный пароль');
@@ -84,7 +76,7 @@ function handleLogin(e) {
 }
 
 function logout() {
-  if (!confirm('Выйти из системы?')) return;
+  if (!confirm('Выйти?')) return;
   currentUser = null;
   localStorage.removeItem('crm_session');
   document.getElementById('app').style.display = 'none';
@@ -95,19 +87,41 @@ function enterApp() {
   document.getElementById('authScreen').style.display = 'none';
   document.getElementById('app').style.display = 'block';
   document.getElementById('currentUserName').textContent = currentUser.login + ' (' + currentUser.role + ')';
-  loadOrders();
+  loadBrigadiers().then(loadOrders);
 }
 
 function checkSession() {
   var s = localStorage.getItem('crm_session');
-  if (s) {
-    try { currentUser = JSON.parse(s); enterApp(); } catch (e) {}
+  if (s) { try { currentUser = JSON.parse(s); enterApp(); } catch(e) {} }
+}
+
+/* ============ ДАННЫЕ ============ */
+function loadBrigadiers() {
+  return supa('/crm_brigadiers?active=eq.true&order=name').then(function(rows) {
+    allBrigadiers = rows;
+    fillBrigadierSelects();
+  });
+}
+
+function fillBrigadierSelects() {
+  var sel1 = document.getElementById('brigadierSelect');
+  var sel2 = document.getElementById('filterBrigadier');
+  if (sel1) {
+    var cur = sel1.value;
+    sel1.innerHTML = '<option value="">— не выбран —</option>' +
+      allBrigadiers.map(function(b) { return '<option value="' + b.name + '">' + b.name + '</option>'; }).join('');
+    sel1.value = cur;
+  }
+  if (sel2) {
+    var cur2 = sel2.value;
+    sel2.innerHTML = '<option value="">Все</option>' +
+      allBrigadiers.map(function(b) { return '<option value="' + b.name + '">' + b.name + '</option>'; }).join('');
+    sel2.value = cur2;
   }
 }
 
-/* ============ ЗАЯВКИ (Supabase) ============ */
 function loadOrders() {
-  supa('/crm_orders?order=datetime.desc').then(function(rows) {
+  return supa('/crm_orders?order=datetime.desc').then(function(rows) {
     allOrders = rows.map(function(r) {
       return {
         id: r.id,
@@ -116,69 +130,58 @@ function loadOrders() {
         address: r.address,
         datetime: r.datetime,
         status: r.status,
-        totalAmount: Number(r.total_amount),
-        expense: Number(r.expense),
-        toGive: Number(r.to_give),
-        createdBy: r.created_by
+        orderType: r.order_type || 'Под ключ',
+        brigadier: r.brigadier || '',
+        source: r.source || 'Сарафанка',
+        totalAmount: Number(r.total_amount) || 0,
+        expense: Number(r.expense) || 0,
+        toGive: Number(r.to_give) || 0,
+        estimateAmount: Number(r.estimate_amount) || 0,
+        advanceAmount: Number(r.advance_amount) || 0,
+        note: r.note || ''
       };
     });
     render();
-  }).catch(function(err) { toast('Ошибка загрузки: ' + err.message, 'error'); });
+    if (document.getElementById('page-brigadiers').style.display !== 'none') renderBrigadiers();
+    if (document.getElementById('page-analytics').style.display !== 'none') renderAnalytics();
+  });
 }
 
-/* ============ ФИЛЬТРЫ ============ */
+/* ============ СТРАНИЦЫ ============ */
+function switchPage(name, btn) {
+  document.getElementById('page-orders').style.display = name === 'orders' ? 'block' : 'none';
+  document.getElementById('page-brigadiers').style.display = name === 'brigadiers' ? 'block' : 'none';
+  document.getElementById('page-analytics').style.display = name === 'analytics' ? 'block' : 'none';
+  document.querySelectorAll('.tab-btn').forEach(function(b) { b.classList.remove('active'); });
+  if (btn) btn.classList.add('active');
+  if (name === 'brigadiers') renderBrigadiers();
+  if (name === 'analytics') renderAnalytics();
+}/* ============ ФИЛЬТРЫ ============ */
 function getFilteredOrders() {
-  var search = document.getElementById('searchInput').value.trim().toLowerCase();
+  var search = (document.getElementById('searchInput').value || '').trim().toLowerCase();
   var status = document.getElementById('filterStatus').value;
-  var df = document.getElementById('filterDateFrom').value;
-  var dt = document.getElementById('filterDateTo').value;
-  var sort = document.getElementById('sortSelect').value;
+  var type = document.getElementById('filterType').value;
+  var brig = document.getElementById('filterBrigadier').value;
+  var src = document.getElementById('filterSource').value;
 
-  var result = allOrders.slice();
-
-  if (search) {
-    result = result.filter(function(o) {
-      return (o.clientName || '').toLowerCase().indexOf(search) !== -1 ||
-             (o.clientPhone || '').toLowerCase().indexOf(search) !== -1 ||
-             (o.address || '').toLowerCase().indexOf(search) !== -1;
-    });
-  }
-  if (status) result = result.filter(function(o) { return o.status === status; });
-  if (df) result = result.filter(function(o) { return o.datetime && o.datetime.slice(0,10) >= df; });
-  if (dt) result = result.filter(function(o) { return o.datetime && o.datetime.slice(0,10) <= dt; });
-
-  if (sort) {
-    var parts = sort.split('-'), field = parts[0], dir = parts[1];
-    result.sort(function(a, b) {
-      var va = a[field], vb = b[field];
-      if (['datetime','totalAmount','expense','toGive'].indexOf(field) !== -1) {
-        va = field === 'datetime' ? new Date(va).getTime() : Number(va) || 0;
-        vb = field === 'datetime' ? new Date(vb).getTime() : Number(vb) || 0;
-      } else {
-        va = String(va || '').toLowerCase();
-        vb = String(vb || '').toLowerCase();
-      }
-      if (va < vb) return dir === 'asc' ? -1 : 1;
-      if (va > vb) return dir === 'asc' ? 1 : -1;
-      return 0;
-    });
-  }
-  return result;
+  return allOrders.filter(function(o) {
+    if (search && !((o.clientName || '').toLowerCase().indexOf(search) !== -1 ||
+                    (o.clientPhone || '').toLowerCase().indexOf(search) !== -1 ||
+                    (o.address || '').toLowerCase().indexOf(search) !== -1)) return false;
+    if (status && o.status !== status) return false;
+    if (type && o.orderType !== type) return false;
+    if (brig && o.brigadier !== brig) return false;
+    if (src && o.source !== src) return false;
+    return true;
+  });
 }
 
 function resetFilters() {
   document.getElementById('searchInput').value = '';
   document.getElementById('filterStatus').value = '';
-  document.getElementById('filterDateFrom').value = '';
-  document.getElementById('filterDateTo').value = '';
-  document.getElementById('sortSelect').value = 'datetime-desc';
-  render();
-}
-
-function sortBy(field) {
-  if (sortState.field === field) sortState.dir = sortState.dir === 'asc' ? 'desc' : 'asc';
-  else { sortState.field = field; sortState.dir = 'desc'; }
-  document.getElementById('sortSelect').value = sortState.field + '-' + sortState.dir;
+  document.getElementById('filterType').value = '';
+  document.getElementById('filterBrigadier').value = '';
+  document.getElementById('filterSource').value = '';
   render();
 }
 
@@ -189,100 +192,92 @@ function formatDate(dt) {
   return d.toLocaleString('ru-RU', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
 }
 function formatMoney(n) {
-  return (Number(n) || 0).toLocaleString('ru-RU', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' ₽';
+  return (Number(n) || 0).toLocaleString('ru-RU', { minimumFractionDigits: 0, maximumFractionDigits: 0 }) + ' ₽';
 }
-function escapeHtml(str) {
-  return String(str || '').replace(/[&<>"']/g, function(c) {
+function escapeHtml(s) {
+  return String(s || '').replace(/[&<>"']/g, function(c) {
     return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];
   });
 }
 
-/* ============ РЕНДЕР ============ */
+/* ============ РЕНДЕР ЗАЯВОК ============ */
 function render() {
   var orders = getFilteredOrders();
   var tbody = document.getElementById('ordersTable');
   var cards = document.getElementById('ordersCards');
   var empty = document.getElementById('emptyMsg');
-
   if (tbody) tbody.innerHTML = '';
   if (cards) cards.innerHTML = '';
   if (empty) empty.style.display = orders.length === 0 ? 'block' : 'none';
 
   orders.forEach(function(o) {
-    var statusClass = 'status status-' + o.status.toLowerCase().replace(' ', '-');
-
+    var st = 'status status-' + o.status.toLowerCase();
     if (tbody) {
       var tr = document.createElement('tr');
       tr.innerHTML =
         '<td>' + formatDate(o.datetime) + '</td>' +
+        '<td>' + escapeHtml(o.orderType) + '</td>' +
         '<td><strong>' + escapeHtml(o.clientName) + '</strong></td>' +
         '<td>' + escapeHtml(o.clientPhone) + '</td>' +
         '<td>' + escapeHtml(o.address) + '</td>' +
-        '<td><span class="' + statusClass + '">' + o.status + '</span></td>' +
+        '<td>' + escapeHtml(o.brigadier || '—') + '</td>' +
+        '<td>' + escapeHtml(o.source) + '</td>' +
+        '<td><span class="' + st + '">' + o.status + '</span></td>' +
         '<td>' + formatMoney(o.totalAmount) + '</td>' +
-        '<td style="color:#dc2626;">' + formatMoney(o.expense) + '</td>' +
-        '<td style="color:#059669; font-weight:600;">' + formatMoney(o.toGive) + '</td>' +
-        '<td class="no-print">' +
-          '<button class="btn-edit" onclick="editOrder(' + o.id + ')">✎</button>' +
-          '<button class="btn-print" onclick="printOrder(' + o.id + ')">🖨</button>' +
-          '<button class="btn-danger" onclick="deleteOrder(' + o.id + ')">✕</button>' +
-        '</td>';
+        '<td style="color:#0891b2;">' + formatMoney(o.advanceAmount) + '</td>' +
+        '<td><button class="btn-edit" onclick="editOrder(' + o.id + ')">✎</button>' +
+            '<button class="btn-danger" onclick="deleteOrder(' + o.id + ')">✕</button></td>';
       tbody.appendChild(tr);
     }
-
     if (cards) {
       var card = document.createElement('div');
       card.className = 'card';
       card.innerHTML =
-        '<div class="card-name">' + escapeHtml(o.clientName) + '</div>' +
-        '<div class="card-row"><span class="label">📞 Телефон</span><span class="value">' + escapeHtml(o.clientPhone) + '</span></div>' +
-        '<div class="card-row"><span class="label">📍 Адрес</span><span class="value">' + escapeHtml(o.address) + '</span></div>' +
-        '<div class="card-row"><span class="label">🕐 Дата</span><span class="value">' + formatDate(o.datetime) + '</span></div>' +
-        '<div class="card-row"><span class="label">Статус</span><span class="' + statusClass + '">' + o.status + '</span></div>' +
+        '<div class="card-name">' + escapeHtml(o.clientName) + ' <span class="' + st + '">' + o.status + '</span></div>' +
+        '<div class="card-row"><span class="label">📞</span><span class="value">' + escapeHtml(o.clientPhone) + '</span></div>' +
+        '<div class="card-row"><span class="label">📍</span><span class="value">' + escapeHtml(o.address) + '</span></div>' +
+        '<div class="card-row"><span class="label">Тип</span><span class="value">' + escapeHtml(o.orderType) + '</span></div>' +
+        '<div class="card-row"><span class="label">Бригадир</span><span class="value">' + escapeHtml(o.brigadier || '—') + '</span></div>' +
         '<div class="card-money">' +
-          '<div><div class="label">Сумма</div><div class="num">' + formatMoney(o.totalAmount) + '</div></div>' +
-          '<div><div class="label">Расход</div><div class="num" style="color:#dc2626;">' + formatMoney(o.expense) + '</div></div>' +
-          '<div><div class="label">К сдаче</div><div class="num" style="color:#059669;">' + formatMoney(o.toGive) + '</div></div>' +
+          '<div><div class="label">Смета</div><div class="num">' + formatMoney(o.totalAmount) + '</div></div>' +
+          '<div><div class="label">Аванс</div><div class="num" style="color:#0891b2;">' + formatMoney(o.advanceAmount) + '</div></div>' +
         '</div>' +
         '<div class="card-actions">' +
           '<button class="btn-edit" onclick="editOrder(' + o.id + ')">✎ Изменить</button>' +
-          '<button class="btn-print" onclick="printOrder(' + o.id + ')">🖨</button>' +
           '<button class="btn-danger" onclick="deleteOrder(' + o.id + ')">✕</button>' +
         '</div>';
       cards.appendChild(card);
     }
   });
 
-  var total = orders.reduce(function(s, o) { return s + (Number(o.totalAmount) || 0); }, 0);
-  var expense = orders.reduce(function(s, o) { return s + (Number(o.expense) || 0); }, 0);
-  var profit = total - expense;
+  var active = orders.filter(function(o) { return o.status !== 'Отказ'; });
+  var signed = orders.filter(function(o) { return o.status === 'Подписан'; });
+  var rejected = orders.filter(function(o) { return o.status === 'Отказ'; });
 
   document.getElementById('statCount').textContent = orders.length;
-  document.getElementById('statTotal').textContent = formatMoney(total);
-  document.getElementById('statExpense').textContent = formatMoney(expense);
-  document.getElementById('statProfit').textContent = formatMoney(profit);
-  document.getElementById('statProfit').style.color = profit >= 0 ? '#059669' : '#dc2626';
+  document.getElementById('statTotal').textContent = formatMoney(active.reduce(function(s, o) { return s + o.totalAmount; }, 0));
+  document.getElementById('statSigned').textContent = formatMoney(signed.reduce(function(s, o) { return s + o.totalAmount; }, 0));
+  document.getElementById('statAdvance').textContent = formatMoney(orders.reduce(function(s, o) { return s + o.advanceAmount; }, 0));
+  document.getElementById('statRejected').textContent = rejected.length + ' шт';
 }
 
-/* ============ МОДАЛКА ============ */
+/* ============ МОДАЛКА ЗАЯВКИ ============ */
 function openCreateModal() {
   document.getElementById('orderForm').reset();
   document.getElementById('editId').value = '';
-  document.getElementById('toGive').value = '';
   document.getElementById('modalTitle').textContent = 'Новая заявка';
   var now = new Date();
   now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
   document.getElementById('datetime').value = now.toISOString().slice(0,16);
   document.getElementById('orderModal').classList.add('active');
 }
-
 function closeModal() { document.getElementById('orderModal').classList.remove('active'); }
 
 document.addEventListener('input', function(e) {
   if (e.target.id === 'totalAmount' || e.target.id === 'expense') {
-    var total = parseFloat(document.getElementById('totalAmount').value) || 0;
-    var exp = parseFloat(document.getElementById('expense').value) || 0;
-    document.getElementById('toGive').value = (total - exp).toFixed(2);
+    var t = parseFloat(document.getElementById('totalAmount').value) || 0;
+    var ex = parseFloat(document.getElementById('expense').value) || 0;
+    document.getElementById('toGive').value = (t - ex).toFixed(2);
   }
 });
 
@@ -290,46 +285,51 @@ function editOrder(id) {
   var o = allOrders.find(function(x) { return x.id === id; });
   if (!o) return;
   document.getElementById('editId').value = o.id;
+  document.getElementById('orderType').value = o.orderType;
   document.getElementById('clientName').value = o.clientName;
   document.getElementById('clientPhone').value = o.clientPhone;
   document.getElementById('address').value = o.address;
   document.getElementById('datetime').value = o.datetime;
+  document.getElementById('brigadierSelect').value = o.brigadier || '';
+  document.getElementById('source').value = o.source;
   document.getElementById('status').value = o.status;
   document.getElementById('totalAmount').value = o.totalAmount;
+  document.getElementById('advanceAmount').value = o.advanceAmount;
   document.getElementById('expense').value = o.expense;
   document.getElementById('toGive').value = o.toGive;
-  document.getElementById('modalTitle').textContent = 'Редактирование заявки';
+  document.getElementById('note').value = o.note;
+  document.getElementById('modalTitle').textContent = 'Редактирование';
   document.getElementById('orderModal').classList.add('active');
 }
 
 function saveOrder(e) {
   e.preventDefault();
   var editId = document.getElementById('editId').value;
-  var totalAmount = parseFloat(document.getElementById('totalAmount').value) || 0;
-  var expense = parseFloat(document.getElementById('expense').value) || 0;
-
+  var t = parseFloat(document.getElementById('totalAmount').value) || 0;
+  var ex = parseFloat(document.getElementById('expense').value) || 0;
   var data = {
+    order_type: document.getElementById('orderType').value,
     client_name: document.getElementById('clientName').value.trim(),
     client_phone: document.getElementById('clientPhone').value.trim(),
     address: document.getElementById('address').value.trim(),
     datetime: document.getElementById('datetime').value,
+    brigadier: document.getElementById('brigadierSelect').value,
+    source: document.getElementById('source').value,
     status: document.getElementById('status').value,
-    total_amount: totalAmount,
-    expense: expense,
-    to_give: totalAmount - expense,
+    total_amount: t,
+    estimate_amount: t,
+    advance_amount: parseFloat(document.getElementById('advanceAmount').value) || 0,
+    expense: ex,
+    to_give: t - ex,
+    note: document.getElementById('note').value.trim(),
     created_by: currentUser.login,
     updated_at: new Date().toISOString()
   };
-
-  var promise;
-  if (editId) {
-    promise = supa('/crm_orders?id=eq.' + editId, { method: 'PATCH', body: data });
-  } else {
-    promise = supa('/crm_orders', { method: 'POST', body: data });
-  }
-
-  promise.then(function() {
-    toast(editId ? 'Заявка обновлена' : 'Заявка добавлена', 'success');
+  var p = editId
+    ? supa('/crm_orders?id=eq.' + editId, { method: 'PATCH', body: data })
+    : supa('/crm_orders', { method: 'POST', body: data });
+  p.then(function() {
+    toast(editId ? 'Обновлено' : 'Добавлено', 'success');
     closeModal();
     loadOrders();
   }).catch(function(err) { toast('Ошибка: ' + err.message, 'error'); });
@@ -338,101 +338,128 @@ function saveOrder(e) {
 function deleteOrder(id) {
   if (!confirm('Удалить заявку?')) return;
   supa('/crm_orders?id=eq.' + id, { method: 'DELETE' }).then(function() {
-    toast('Заявка удалена', 'success');
-    loadOrders();
+    toast('Удалено', 'success'); loadOrders();
   }).catch(function(err) { toast('Ошибка: ' + err.message, 'error'); });
 }
 
-/* ============ ПЕЧАТЬ ============ */
-function printOrder(id) {
-  var o = allOrders.find(function(x) { return x.id === id; });
-  if (!o) return;
-  document.getElementById('printContent').innerHTML =
-    '<h3>Заявка №' + o.id + '</h3>' +
-    '<div style="margin-top:16px; line-height:1.8;">' +
-      '<div><b>Дата:</b> ' + formatDate(o.datetime) + '</div>' +
-      '<div><b>Клиент:</b> ' + escapeHtml(o.clientName) + '</div>' +
-      '<div><b>Телефон:</b> ' + escapeHtml(o.clientPhone) + '</div>' +
-      '<div><b>Адрес:</b> ' + escapeHtml(o.address) + '</div>' +
-      '<div><b>Статус:</b> ' + o.status + '</div>' +
-      '<hr style="margin:12px 0;">' +
-      '<div><b>Общая сумма:</b> ' + formatMoney(o.totalAmount) + '</div>' +
-      '<div><b>Расход:</b> ' + formatMoney(o.expense) + '</div>' +
-      '<div style="font-size:18px;"><b>К сдаче:</b> ' + formatMoney(o.toGive) + '</div>' +
-    '</div>' +
-    '<div style="display:flex; gap:8px; margin-top:24px;" class="no-print">' +
-      '<button class="btn-primary" style="flex:1;" onclick="printCurrentModal()">🖨 Печать</button>' +
-      '<button class="btn-secondary" onclick="document.getElementById(\'printModal\').classList.remove(\'active\')">Закрыть</button>' +
-    '</div>';
-  document.getElementById('printModal').classList.add('active');
+/* ============ БРИГАДИРЫ ============ */
+function renderBrigadiers() {
+  var tbody = document.getElementById('brigadiersTable');
+  tbody.innerHTML = '';
+  allBrigadiers.forEach(function(b) {
+    var orders = allOrders.filter(function(o) { return o.brigadier === b.name; });
+    var sum = orders.reduce(function(s, o) { return s + o.totalAmount; }, 0);
+    var tr = document.createElement('tr');
+    tr.innerHTML =
+      '<td><strong>' + escapeHtml(b.name) + '</strong></td>' +
+      '<td>' + escapeHtml(b.phone || '—') + '</td>' +
+      '<td>' + (b.percent || 0) + '%</td>' +
+      '<td>' + orders.length + '</td>' +
+      '<td>' + formatMoney(sum) + '</td>' +
+      '<td><button class="btn-edit" onclick="editBrigadier(' + b.id + ')">✎</button>' +
+          '<button class="btn-danger" onclick="deleteBrigadier(' + b.id + ')">✕</button></td>';
+    tbody.appendChild(tr);
+  });
 }
 
-function printCurrentModal() {
-  var content = document.getElementById('printContent').innerHTML;
-  var w = window.open('', '', 'width=600,height=700');
-  w.document.write('<html><head><title>Заявка</title><style>body{font-family:Arial;padding:20px;line-height:1.6;}h3{margin-bottom:16px;}</style></head><body>' + content + '</body></html>');
-  w.document.close();
-  w.focus();
-  setTimeout(function() { w.print(); }, 300);
+function openBrigadierModal() {
+  document.getElementById('brigadierForm').reset();
+  document.getElementById('editBrigId').value = '';
+  document.getElementById('brigTitle').textContent = 'Новый бригадир';
+  document.getElementById('brigadierModal').classList.add('active');
+}
+function closeBrigadierModal() { document.getElementById('brigadierModal').classList.remove('active'); }
+
+function editBrigadier(id) {
+  var b = allBrigadiers.find(function(x) { return x.id === id; });
+  if (!b) return;
+  document.getElementById('editBrigId').value = b.id;
+  document.getElementById('brigName').value = b.name;
+  document.getElementById('brigPhone').value = b.phone || '';
+  document.getElementById('brigPercent').value = b.percent || 0;
+  document.getElementById('brigTitle').textContent = 'Редактирование';
+  document.getElementById('brigadierModal').classList.add('active');
+}
+
+function saveBrigadier(e) {
+  e.preventDefault();
+  var id = document.getElementById('editBrigId').value;
+  var data = {
+    name: document.getElementById('brigName').value.trim(),
+    phone: document.getElementById('brigPhone').value.trim(),
+    percent: parseFloat(document.getElementById('brigPercent').value) || 0
+  };
+  var p = id
+    ? supa('/crm_brigadiers?id=eq.' + id, { method: 'PATCH', body: data })
+    : supa('/crm_brigadiers', { method: 'POST', body: data });
+  p.then(function() {
+    toast('Сохранено', 'success');
+    closeBrigadierModal();
+    loadBrigadiers().then(renderBrigadiers);
+  }).catch(function(err) { toast('Ошибка: ' + err.message, 'error'); });
+}
+
+function deleteBrigadier(id) {
+  if (!confirm('Удалить бригадира?')) return;
+  supa('/crm_brigadiers?id=eq.' + id, { method: 'DELETE' }).then(function() {
+    toast('Удалено', 'success');
+    loadBrigadiers().then(renderBrigadiers);
+  }).catch(function(err) { toast('Ошибка: ' + err.message, 'error'); });
+}
+
+/* ============ АНАЛИТИКА ============ */
+function renderAnalytics() {
+  var total = allOrders.filter(function(o) { return o.status !== 'Отказ'; })
+    .reduce(function(s, o) { return s + o.totalAmount; }, 0);
+  var signed = allOrders.filter(function(o) { return o.status === 'Подписан'; })
+    .reduce(function(s, o) { return s + o.totalAmount; }, 0);
+  var rejected = allOrders.filter(function(o) { return o.status === 'Отказ'; }).length;
+
+  document.getElementById('anaCount').textContent = allOrders.length;
+  document.getElementById('anaTotal').textContent = formatMoney(total);
+  document.getElementById('anaSigned').textContent = formatMoney(signed);
+  document.getElementById('anaRejected').textContent = rejected;
+
+  function groupBy(field) {
+    var map = {};
+    allOrders.forEach(function(o) {
+      var k = o[field] || '—';
+      if (!map[k]) map[k] = { count: 0, sum: 0 };
+      map[k].count++;
+      map[k].sum += o.totalAmount;
+    });
+    return map;
+  }
+
+  function renderGroup(id, map) {
+    var el = document.getElementById(id);
+    var keys = Object.keys(map).sort(function(a, b) { return map[b].sum - map[a].sum; });
+    el.innerHTML = keys.map(function(k) {
+      return '<div class="ana-row"><span>' + escapeHtml(k) + ' (' + map[k].count + ')</span><b>' + formatMoney(map[k].sum) + '</b></div>';
+    }).join('') || '<div style="color:#999;">Нет данных</div>';
+  }
+
+  renderGroup('anaSources', groupBy('source'));
+  renderGroup('anaBrigadiers', groupBy('brigadier'));
+  renderGroup('anaTypes', groupBy('orderType'));
 }
 
 /* ============ ЭКСПОРТ ============ */
 function exportCSV() {
   var orders = getFilteredOrders();
-  if (orders.length === 0) { toast('Нет данных', 'error'); return; }
-  var headers = ['ID','Дата','Имя','Телефон','Адрес','Статус','Сумма','Расход','К сдаче'];
+  if (!orders.length) { toast('Нет данных', 'error'); return; }
+  var headers = ['Дата','Тип','Клиент','Телефон','Адрес','Бригадир','Источник','Статус','Смета','Аванс','Заметка'];
   var rows = orders.map(function(o) {
-    return [o.id, o.datetime, o.clientName, o.clientPhone, o.address, o.status, o.totalAmount, o.expense, o.toGive];
+    return [o.datetime, o.orderType, o.clientName, o.clientPhone, o.address, o.brigadier, o.source, o.status, o.totalAmount, o.advanceAmount, o.note];
   });
   var csv = '\uFEFF' + [headers].concat(rows).map(function(r) {
     return r.map(function(v) { return '"' + String(v == null ? '' : v).replace(/"/g, '""') + '"'; }).join(';');
   }).join('\n');
-  downloadFile(csv, 'orders_' + Date.now() + '.csv', 'text/csv;charset=utf-8');
-  toast('CSV экспортирован', 'success');
-}
-
-function exportJSON() {
-  var data = JSON.stringify(allOrders, null, 2);
-  downloadFile(data, 'orders_' + Date.now() + '.json', 'application/json');
-  toast('JSON экспортирован', 'success');
-}
-
-function importJSON(e) {
-  var file = e.target.files[0];
-  if (!file) return;
-  var reader = new FileReader();
-  reader.onload = function(ev) {
-    try {
-      var data = JSON.parse(ev.target.result);
-      if (!Array.isArray(data)) throw new Error('Не массив');
-      var promises = data.map(function(o) {
-        return supa('/crm_orders', {
-          method: 'POST',
-          body: {
-            client_name: o.clientName, client_phone: o.clientPhone,
-            address: o.address, datetime: o.datetime, status: o.status,
-            total_amount: o.totalAmount || 0, expense: o.expense || 0,
-            to_give: o.toGive || 0, created_by: currentUser.login
-          }
-        });
-      });
-      Promise.all(promises).then(function() {
-        toast('Импортировано ' + data.length + ' заявок', 'success');
-        loadOrders();
-      });
-    } catch (err) { toast('Ошибка: ' + err.message, 'error'); }
-  };
-  reader.readAsText(file);
-  e.target.value = '';
-}
-
-function downloadFile(content, filename, type) {
-  var blob = new Blob([content], { type: type });
+  var blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
   var url = URL.createObjectURL(blob);
-  var a = document.createElement('a');
-  a.href = url; a.download = filename;
-  document.body.appendChild(a); a.click(); a.remove();
-  URL.revokeObjectURL(url);
+  var a = document.createElement('a'); a.href = url; a.download = 'orders_' + Date.now() + '.csv';
+  document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
+  toast('Экспортировано', 'success');
 }
 
 /* ============ TOAST ============ */
@@ -445,5 +472,4 @@ function toast(msg, type) {
   el._t = setTimeout(function() { el.className = 'toast'; }, 2500);
 }
 
-/* ============ СТАРТ ============ */
 checkSession();
