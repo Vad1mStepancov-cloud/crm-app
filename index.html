@@ -6,55 +6,21 @@
 <title>CRM - Управление заявками</title>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
-  body {
-    font-family: -apple-system, Segoe UI, Roboto, sans-serif;
-    background: #f0f2f5;
-    padding: 16px;
-    color: #333;
-  }
+  body { font-family: -apple-system, Segoe UI, Roboto, sans-serif; background: #f0f2f5; padding: 16px; color: #333; }
   .container { max-width: 1400px; margin: 0 auto; }
-  .header {
-    display: flex; justify-content: space-between; align-items: center;
-    margin-bottom: 20px; flex-wrap: wrap; gap: 12px;
-  }
+  .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 12px; }
   h1 { color: #1a1a2e; font-size: 22px; }
-  .user-badge {
-    background: #fff; padding: 8px 16px; border-radius: 20px;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.08); font-size: 14px;
-    display: flex; align-items: center; gap: 12px;
-  }
+  .user-badge { background: #fff; padding: 8px 16px; border-radius: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); font-size: 14px; display: flex; align-items: center; gap: 12px; }
   .user-badge span { color: #4f46e5; font-weight: 600; }
-
-  /* AUTH */
-  .auth-screen {
-    max-width: 400px; margin: 60px auto; background: #fff;
-    padding: 32px; border-radius: 16px;
-    box-shadow: 0 4px 20px rgba(0,0,0,0.1);
-  }
+  .auth-screen { max-width: 400px; margin: 60px auto; background: #fff; padding: 32px; border-radius: 16px; box-shadow: 0 4px 20px rgba(0,0,0,0.1); }
   .auth-screen h2 { margin-bottom: 20px; text-align: center; color: #1a1a2e; }
-  .auth-tabs {
-    display: flex; gap: 8px; margin-bottom: 20px;
-    background: #f3f4f6; padding: 4px; border-radius: 10px;
-  }
-  .auth-tabs button {
-    flex: 1; padding: 8px; background: transparent; border: none;
-    border-radius: 6px; cursor: pointer; font-size: 14px; color: #666;
-  }
+  .auth-tabs { display: flex; gap: 8px; margin-bottom: 20px; background: #f3f4f6; padding: 4px; border-radius: 10px; }
+  .auth-tabs button { flex: 1; padding: 8px; background: transparent; border: none; border-radius: 6px; cursor: pointer; font-size: 14px; color: #666; }
   .auth-tabs button.active { background: #fff; color: #4f46e5; font-weight: 600; }
-
-  /* FORMS */
-  input, select, textarea {
-    padding: 10px 12px; border: 1px solid #ddd; border-radius: 8px;
-    font-size: 14px; font-family: inherit; width: 100%;
-  }
+  input, select, textarea { padding: 10px 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 14px; font-family: inherit; width: 100%; }
   input:focus, select:focus { outline: none; border-color: #4f46e5; }
   label { font-size: 12px; color: #666; display: block; margin-bottom: 4px; }
-
-  button {
-    padding: 10px 20px; border: none; border-radius: 8px;
-    cursor: pointer; font-size: 14px; font-weight: 500;
-    transition: 0.2s; font-family: inherit;
-  }
+  button { padding: 10px 20px; border: none; border-radius: 8px; cursor: pointer; font-size: 14px; font-weight: 500; transition: 0.2s; font-family: inherit; }
   .btn-primary { background: #4f46e5; color: #fff; }
   .btn-primary:hover { background: #4338ca; }
   .btn-secondary { background: #6b7280; color: #fff; }
@@ -65,50 +31,23 @@
   .btn-edit:hover { background: #d97706; }
   .btn-print { background: #0891b2; color: #fff; padding: 6px 12px; font-size: 12px; margin-right: 4px; }
   .btn-print:hover { background: #0e7490; }
-
-  /* FILTERS */
-  .filters {
-    background: #fff; padding: 16px; border-radius: 12px;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.08); margin-bottom: 20px;
-    display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-    gap: 12px; align-items: end;
-  }
-
-  /* TABLE */
+  .filters { background: #fff; padding: 16px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); margin-bottom: 20px; display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; align-items: end; }
   .table-wrap { overflow-x: auto; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
   table { width: 100%; background: #fff; border-collapse: collapse; min-width: 900px; }
   th, td { padding: 12px; text-align: left; font-size: 14px; border-bottom: 1px solid #eee; }
-  th {
-    background: #1a1a2e; color: #fff; font-weight: 500;
-    font-size: 13px; text-transform: uppercase;
-    letter-spacing: 0.5px; cursor: pointer; user-select: none;
-  }
+  th { background: #1a1a2e; color: #fff; font-weight: 500; font-size: 13px; text-transform: uppercase; letter-spacing: 0.5px; cursor: pointer; user-select: none; }
   th:hover { background: #2a2a4e; }
   tr:hover { background: #f9fafb; }
-
-  .status {
-    padding: 4px 10px; border-radius: 20px; font-size: 12px;
-    font-weight: 500; display: inline-block; white-space: nowrap;
-  }
+  .status { padding: 4px 10px; border-radius: 20px; font-size: 12px; font-weight: 500; display: inline-block; white-space: nowrap; }
   .status-новая { background: #dbeafe; color: #1e40af; }
   .status-в-работе { background: #fef3c7; color: #92400e; }
   .status-выполнена { background: #d1fae5; color: #065f46; }
   .status-отменена { background: #fee2e2; color: #991b1b; }
-
-  .summary {
-    display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-    gap: 16px; margin-bottom: 20px;
-  }
-  .stat {
-    background: #fff; padding: 16px; border-radius: 12px;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-  }
+  .summary { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px; margin-bottom: 20px; }
+  .stat { background: #fff; padding: 16px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
   .stat-label { font-size: 12px; color: #666; text-transform: uppercase; }
   .stat-value { font-size: 22px; font-weight: 700; color: #1a1a2e; margin-top: 4px; }
-
   .empty { text-align: center; padding: 40px; color: #999; background: #fff; border-radius: 12px; }
-
-  /* PRINT */
   @media print {
     body { background: #fff; padding: 0; }
     .no-print { display: none !important; }
@@ -116,85 +55,40 @@
     th { background: #333 !important; color: #fff !important; -webkit-print-color-adjust: exact; }
     .header { display: none; }
   }
-
-  /* MODAL */
-  .modal-bg {
-    position: fixed; inset: 0; background: rgba(0,0,0,0.5);
-    display: none; align-items: center; justify-content: center;
-    z-index: 100; padding: 20px;
-  }
+  .modal-bg { position: fixed; inset: 0; background: rgba(0,0,0,0.5); display: none; align-items: center; justify-content: center; z-index: 100; padding: 20px; }
   .modal-bg.active { display: flex; }
-  .modal {
-    background: #fff; padding: 24px; border-radius: 16px;
-    max-width: 500px; width: 100%; max-height: 90vh; overflow-y: auto;
-  }
+  .modal { background: #fff; padding: 24px; border-radius: 16px; max-width: 500px; width: 100%; max-height: 90vh; overflow-y: auto; }
   .modal h3 { margin-bottom: 16px; }
-
-  .toast {
-    position: fixed; bottom: 20px; right: 20px;
-    background: #1a1a2e; color: #fff; padding: 12px 20px;
-    border-radius: 10px; box-shadow: 0 4px 12px rgba(0,0,0,0.2);
-    opacity: 0; transform: translateY(20px); transition: 0.3s; z-index: 200;
-  }
+  .toast { position: fixed; bottom: 20px; right: 20px; background: #1a1a2e; color: #fff; padding: 12px 20px; border-radius: 10px; box-shadow: 0 4px 12px rgba(0,0,0,0.2); opacity: 0; transform: translateY(20px); transition: 0.3s; z-index: 200; }
   .toast.show { opacity: 1; transform: translateY(0); }
   .toast.success { background: #059669; }
   .toast.error { background: #dc2626; }
-
   .actions-bar { display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap; }
-
-  @media (max-width: 600px) {
-    h1 { font-size: 18px; }
-    .stat-value { font-size: 18px; }
-    body { padding: 10px; }
-  }
+  @media (max-width: 600px) { h1 { font-size: 18px; } .stat-value { font-size: 18px; } body { padding: 10px; } }
 </style>
 </head>
 <body>
 
-<!-- ЭКРАН ВХОДА -->
 <div id="authScreen" class="auth-screen">
   <h2>🔐 CRM Вход</h2>
   <div class="auth-tabs">
     <button id="tabLogin" class="active" onclick="switchAuth('login')">Вход</button>
     <button id="tabRegister" onclick="switchAuth('register')">Регистрация</button>
   </div>
-
   <form id="loginForm" onsubmit="handleLogin(event)">
-    <div style="margin-bottom:12px;">
-      <label>Логин</label>
-      <input type="text" id="loginUser" required autocomplete="username">
-    </div>
-    <div style="margin-bottom:16px;">
-      <label>Пароль</label>
-      <input type="password" id="loginPass" required autocomplete="current-password">
-    </div>
+    <div style="margin-bottom:12px;"><label>Логин</label><input type="text" id="loginUser" required></div>
+    <div style="margin-bottom:16px;"><label>Пароль</label><input type="password" id="loginPass" required></div>
     <button type="submit" class="btn-primary" style="width:100%;">Войти</button>
-    <p style="margin-top:14px; font-size:12px; color:#888; text-align:center;">
-      Первый вход: <b>admin / admin</b>
-    </p>
+    <p style="margin-top:14px; font-size:12px; color:#888; text-align:center;">Первый вход: <b>admin / admin</b></p>
   </form>
-
   <form id="registerForm" style="display:none;" onsubmit="handleRegister(event)">
-    <div style="margin-bottom:12px;">
-      <label>Логин</label>
-      <input type="text" id="regUser" required minlength="3">
-    </div>
-    <div style="margin-bottom:12px;">
-      <label>Пароль (мин. 4 символа)</label>
-      <input type="password" id="regPass" required minlength="4">
-    </div>
-    <div style="margin-bottom:16px;">
-      <label>Роль</label>
-      <select id="regRole">
-        <option value="user">Пользователь</option>
-        <option value="admin">Администратор</option>
-      </select>
-    </div>
+    <div style="margin-bottom:12px;"><label>Логин</label><input type="text" id="regUser" required minlength="3"></div>
+    <div style="margin-bottom:12px;"><label>Пароль (мин. 4 символа)</label><input type="password" id="regPass" required minlength="4"></div>
+    <div style="margin-bottom:16px;"><label>Роль</label><select id="regRole"><option value="user">Пользователь</option><option value="admin">Администратор</option></select></div>
     <button type="submit" class="btn-primary" style="width:100%;">Зарегистрироваться</button>
   </form>
 </div>
 
-<!-- ОСНОВНОЕ ПРИЛОЖЕНИЕ -->
 <div id="app" class="container" style="display:none;">
   <div class="header">
     <h1>📋 CRM - Управление заявками</h1>
@@ -203,64 +97,27 @@
       <button class="btn-secondary" style="padding:6px 12px; font-size:12px;" onclick="logout()">Выйти</button>
     </div>
   </div>
-
   <div class="summary">
     <div class="stat"><div class="stat-label">Всего заявок</div><div class="stat-value" id="statCount">0</div></div>
     <div class="stat"><div class="stat-label">Общая сумма</div><div class="stat-value" id="statTotal">0 ₽</div></div>
     <div class="stat"><div class="stat-label">Общий расход</div><div class="stat-value" id="statExpense">0 ₽</div></div>
     <div class="stat"><div class="stat-label">Прибыль</div><div class="stat-value" id="statProfit">0 ₽</div></div>
   </div>
-
   <div class="actions-bar no-print">
     <button class="btn-primary" onclick="openCreateModal()">+ Новая заявка</button>
     <button class="btn-secondary" onclick="exportCSV()">📤 Экспорт CSV</button>
     <button class="btn-secondary" onclick="exportJSON()">💾 Экспорт JSON</button>
     <button class="btn-secondary" onclick="window.print()">🖨️ Печать списка</button>
-    <label class="btn-secondary" style="cursor:pointer; display:inline-flex; align-items:center;">
-      📥 Импорт JSON
-      <input type="file" accept=".json" style="display:none;" onchange="importJSON(event)">
-    </label>
+    <label class="btn-secondary" style="cursor:pointer; display:inline-flex; align-items:center;">📥 Импорт JSON<input type="file" accept=".json" style="display:none;" onchange="importJSON(event)"></label>
   </div>
-
   <div class="filters no-print">
-    <div>
-      <label>🔍 Поиск</label>
-      <input type="text" id="searchInput" placeholder="Имя, телефон, адрес..." oninput="render()">
-    </div>
-    <div>
-      <label>Статус</label>
-      <select id="filterStatus" onchange="render()">
-        <option value="">Все</option>
-        <option>Новая</option>
-        <option>В работе</option>
-        <option>Выполнена</option>
-        <option>Отменена</option>
-      </select>
-    </div>
-    <div>
-      <label>Дата от</label>
-      <input type="date" id="filterDateFrom" onchange="render()">
-    </div>
-    <div>
-      <label>Дата до</label>
-      <input type="date" id="filterDateTo" onchange="render()">
-    </div>
-    <div>
-      <label>Сортировка</label>
-      <select id="sortSelect" onchange="render()">
-        <option value="datetime-desc">Дата ↓</option>
-        <option value="datetime-asc">Дата ↑</option>
-        <option value="totalAmount-desc">Сумма ↓</option>
-        <option value="totalAmount-asc">Сумма ↑</option>
-        <option value="clientName-asc">Имя A-Z</option>
-        <option value="clientName-desc">Имя Z-A</option>
-      </select>
-    </div>
-    <div>
-      <button class="btn-secondary" style="width:100%;" onclick="resetFilters()">Сбросить</button>
-    </div>
+    <div><label>🔍 Поиск</label><input type="text" id="searchInput" placeholder="Имя, телефон, адрес..." oninput="render()"></div>
+    <div><label>Статус</label><select id="filterStatus" onchange="render()"><option value="">Все</option><option>Новая</option><option>В работе</option><option>Выполнена</option><option>Отменена</option></select></div>
+    <div><label>Дата от</label><input type="date" id="filterDateFrom" onchange="render()"></div>
+    <div><label>Дата до</label><input type="date" id="filterDateTo" onchange="render()"></div>
+    <div><label>Сортировка</label><select id="sortSelect" onchange="render()"><option value="datetime-desc">Дата ↓</option><option value="datetime-asc">Дата ↑</option><option value="totalAmount-desc">Сумма ↓</option><option value="totalAmount-asc">Сумма ↑</option><option value="clientName-asc">Имя A-Z</option><option value="clientName-desc">Имя Z-A</option></select></div>
+    <div><button class="btn-secondary" style="width:100%;" onclick="resetFilters()">Сбросить</button></div>
   </div>
-
   <div class="table-wrap">
     <table>
       <thead>
@@ -282,7 +139,6 @@
   <div class="empty" id="emptyMsg" style="display:none;">Заявок пока нет</div>
 </div>
 
-<!-- МОДАЛКА: создать/редактировать -->
 <div class="modal-bg no-print" id="orderModal">
   <div class="modal">
     <h3 id="modalTitle">Новая заявка</h3>
@@ -293,15 +149,7 @@
         <div><label>Телефон</label><input type="tel" id="clientPhone" required></div>
         <div><label>Адрес</label><input type="text" id="address" required></div>
         <div><label>Дата и время</label><input type="datetime-local" id="datetime" required></div>
-        <div>
-          <label>Статус</label>
-          <select id="status">
-            <option>Новая</option>
-            <option>В работе</option>
-            <option>Выполнена</option>
-            <option>Отменена</option>
-          </select>
-        </div>
+        <div><label>Статус</label><select id="status"><option>Новая</option><option>В работе</option><option>Выполнена</option><option>Отменена</option></select></div>
         <div><label>Общая сумма (₽)</label><input type="number" id="totalAmount" step="0.01" min="0" required></div>
         <div><label>Расход (₽)</label><input type="number" id="expense" step="0.01" min="0" value="0" required></div>
         <div><label>К сдаче (₽)</label><input type="number" id="toGive" step="0.01" readonly style="background:#f3f4f6;"></div>
@@ -314,41 +162,26 @@
   </div>
 </div>
 
-<!-- МОДАЛКА: печать одной заявки -->
-<div class="modal-bg no-print" id="printModal">
-  <div class="modal" id="printContent"></div>
-</div>
-
+<div class="modal-bg no-print" id="printModal"><div class="modal" id="printContent"></div></div>
 <div class="toast" id="toast"></div>
 
 <script>
-/* =========================================================
-   CRM в одном файле. Данные хранятся в localStorage браузера.
-   ========================================================= */
-const STORAGE = {
-  orders: 'crm_orders',
-  users: 'crm_users',
-  session: 'crm_session'
-};
+var STORAGE = { orders: 'crm_orders', users: 'crm_users', session: 'crm_session' };
+var currentUser = null;
+var allOrders = [];
+var sortState = { field: 'datetime', dir: 'desc' };
 
-let currentUser = null;
-let allOrders = [];
-let sortState = { field: 'datetime', dir: 'desc' };
-
-/* ============ ПАРОЛИ (простой хэш) ============ */
 function hashPassword(pwd) {
-  let hash = 0;
-  for (let i = 0; i < pwd.length; i++) {
+  var hash = 0;
+  for (var i = 0; i < pwd.length; i++) {
     hash = ((hash << 5) - hash) + pwd.charCodeAt(i);
     hash |= 0;
   }
   return 'h' + hash;
 }
-
-function getUsers() { return JSON.parse(localStorage.getItem(STORAGE.users) || '{}'); }
+function getUsers() { try { return JSON.parse(localStorage.getItem(STORAGE.users) || '{}'); } catch(e) { return {}; } }
 function saveUsers(u) { localStorage.setItem(STORAGE.users, JSON.stringify(u)); }
 
-/* ============ АВТОРИЗАЦИЯ ============ */
 function switchAuth(mode) {
   document.getElementById('tabLogin').classList.toggle('active', mode === 'login');
   document.getElementById('tabRegister').classList.toggle('active', mode === 'register');
@@ -358,13 +191,12 @@ function switchAuth(mode) {
 
 function handleRegister(e) {
   e.preventDefault();
-  const login = document.getElementById('regUser').value.trim();
-  const pass = document.getElementById('regPass').value;
-  const role = document.getElementById('regRole').value;
-  const users = getUsers();
-
+  var login = document.getElementById('regUser').value.trim();
+  var pass = document.getElementById('regPass').value;
+  var role = document.getElementById('regRole').value;
+  var users = getUsers();
   if (users[login]) return toast('Пользователь уже существует', 'error');
-  users[login] = { password: hashPassword(pass), role, created: Date.now() };
+  users[login] = { password: hashPassword(pass), role: role, created: Date.now() };
   saveUsers(users);
   toast('Регистрация успешна! Теперь войдите.', 'success');
   switchAuth('login');
@@ -373,22 +205,18 @@ function handleRegister(e) {
 
 function handleLogin(e) {
   e.preventDefault();
-  const login = document.getElementById('loginUser').value.trim();
-  const pass = document.getElementById('loginPass').value;
-  let users = getUsers();
-
-  // Bootstrap: если пользователей нет — создаём admin/admin
+  var login = document.getElementById('loginUser').value.trim();
+  var pass = document.getElementById('loginPass').value;
+  var users = getUsers();
   if (Object.keys(users).length === 0) {
     users['admin'] = { password: hashPassword('admin'), role: 'admin', created: Date.now() };
     saveUsers(users);
   }
-
-  const user = users[login];
+  var user = users[login];
   if (!user || user.password !== hashPassword(pass)) {
     return toast('Неверный логин или пароль', 'error');
   }
-
-  currentUser = { login, role: user.role };
+  currentUser = { login: login, role: user.role };
   localStorage.setItem(STORAGE.session, JSON.stringify(currentUser));
   enterApp();
 }
@@ -410,47 +238,38 @@ function enterApp() {
 }
 
 function checkSession() {
-  const s = localStorage.getItem(STORAGE.session);
+  var s = localStorage.getItem(STORAGE.session);
   if (s) {
     try { currentUser = JSON.parse(s); enterApp(); } catch(e) {}
   }
 }
 
-/* ============ ЗАЯВКИ ============ */
-function loadOrders() {
-  allOrders = JSON.parse(localStorage.getItem(STORAGE.orders) || '[]');
-}
+function loadOrders() { try { allOrders = JSON.parse(localStorage.getItem(STORAGE.orders) || '[]'); } catch(e) { allOrders = []; } }
+function saveOrders() { localStorage.setItem(STORAGE.orders, JSON.stringify(allOrders)); }
 
-function saveOrders() {
-  localStorage.setItem(STORAGE.orders, JSON.stringify(allOrders));
-}
-
-/* ============ ФИЛЬТРЫ И СОРТИРОВКА ============ */
 function getFilteredOrders() {
-  const search = document.getElementById('searchInput').value.trim().toLowerCase();
-  const status = document.getElementById('filterStatus').value;
-  const df = document.getElementById('filterDateFrom').value;
-  const dt = document.getElementById('filterDateTo').value;
-  const sort = document.getElementById('sortSelect').value;
-
-  let result = allOrders.slice();
-
+  var search = document.getElementById('searchInput').value.trim().toLowerCase();
+  var status = document.getElementById('filterStatus').value;
+  var df = document.getElementById('filterDateFrom').value;
+  var dt = document.getElementById('filterDateTo').value;
+  var sort = document.getElementById('sortSelect').value;
+  var result = allOrders.slice();
   if (search) {
-    result = result.filter(o =>
-      (o.clientName || '').toLowerCase().includes(search) ||
-      (o.clientPhone || '').toLowerCase().includes(search) ||
-      (o.address || '').toLowerCase().includes(search)
-    );
+    result = result.filter(function(o) {
+      return (o.clientName || '').toLowerCase().indexOf(search) !== -1 ||
+             (o.clientPhone || '').toLowerCase().indexOf(search) !== -1 ||
+             (o.address || '').toLowerCase().indexOf(search) !== -1;
+    });
   }
-  if (status) result = result.filter(o => o.status === status);
-  if (df) result = result.filter(o => o.datetime && o.datetime.slice(0,10) >= df);
-  if (dt) result = result.filter(o => o.datetime && o.datetime.slice(0,10) <= dt);
-
+  if (status) result = result.filter(function(o) { return o.status === status; });
+  if (df) result = result.filter(function(o) { return o.datetime && o.datetime.slice(0,10) >= df; });
+  if (dt) result = result.filter(function(o) { return o.datetime && o.datetime.slice(0,10) <= dt; });
   if (sort) {
-    const [field, dir] = sort.split('-');
-    result.sort((a, b) => {
-      let va = a[field], vb = b[field];
-      if (['datetime','totalAmount','expense','toGive'].includes(field)) {
+    var parts = sort.split('-');
+    var field = parts[0], dir = parts[1];
+    result.sort(function(a, b) {
+      var va = a[field], vb = b[field];
+      if (['datetime','totalAmount','expense','toGive'].indexOf(field) !== -1) {
         va = field === 'datetime' ? new Date(va).getTime() : Number(va) || 0;
         vb = field === 'datetime' ? new Date(vb).getTime() : Number(vb) || 0;
       } else {
@@ -481,60 +300,48 @@ function sortBy(field) {
   render();
 }
 
-/* ============ ФОРМАТИРОВАНИЕ ============ */
 function formatDate(dt) {
   if (!dt) return '—';
-  const d = new Date(dt);
-  return d.toLocaleString('ru-RU', {
-    day: '2-digit', month: '2-digit', year: 'numeric',
-    hour: '2-digit', minute: '2-digit'
-  });
+  var d = new Date(dt);
+  return d.toLocaleString('ru-RU', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
 }
 function formatMoney(n) {
-  return (Number(n) || 0).toLocaleString('ru-RU', {
-    minimumFractionDigits: 2, maximumFractionDigits: 2
-  }) + ' ₽';
+  return (Number(n) || 0).toLocaleString('ru-RU', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' ₽';
 }
 function escapeHtml(str) {
-  return String(str || '').replace(/[&<>"']/g, c => ({
-    '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
-  }[c]));
+  return String(str || '').replace(/[&<>"']/g, function(c) {
+    return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];
+  });
 }
 
-/* ============ РЕНДЕР ============ */
 function render() {
-  const orders = getFilteredOrders();
-  const tbody = document.getElementById('ordersTable');
-  const empty = document.getElementById('emptyMsg');
-
+  var orders = getFilteredOrders();
+  var tbody = document.getElementById('ordersTable');
+  var empty = document.getElementById('emptyMsg');
   tbody.innerHTML = '';
   empty.style.display = orders.length === 0 ? 'block' : 'none';
-
-  orders.forEach(o => {
-    const tr = document.createElement('tr');
-    const statusClass = 'status status-' + o.status.toLowerCase().replace(' ', '-');
-    tr.innerHTML = `
-      <td>${formatDate(o.datetime)}</td>
-      <td><strong>${escapeHtml(o.clientName)}</strong></td>
-      <td>${escapeHtml(o.clientPhone)}</td>
-      <td>${escapeHtml(o.address)}</td>
-      <td><span class="${statusClass}">${o.status}</span></td>
-      <td>${formatMoney(o.totalAmount)}</td>
-      <td style="color:#dc2626;">${formatMoney(o.expense)}</td>
-      <td style="color:#059669; font-weight:600;">${formatMoney(o.toGive)}</td>
-      <td class="no-print">
-        <button class="btn-edit" onclick="editOrder(${o.id})" title="Редактировать">✎</button>
-        <button class="btn-print" onclick="printOrder(${o.id})" title="Печать">🖨</button>
-        <button class="btn-danger" onclick="deleteOrder(${o.id})" title="Удалить">✕</button>
-      </td>
-    `;
+  orders.forEach(function(o) {
+    var tr = document.createElement('tr');
+    var statusClass = 'status status-' + o.status.toLowerCase().replace(' ', '-');
+    tr.innerHTML =
+      '<td>' + formatDate(o.datetime) + '</td>' +
+      '<td><strong>' + escapeHtml(o.clientName) + '</strong></td>' +
+      '<td>' + escapeHtml(o.clientPhone) + '</td>' +
+      '<td>' + escapeHtml(o.address) + '</td>' +
+      '<td><span class="' + statusClass + '">' + o.status + '</span></td>' +
+      '<td>' + formatMoney(o.totalAmount) + '</td>' +
+      '<td style="color:#dc2626;">' + formatMoney(o.expense) + '</td>' +
+      '<td style="color:#059669; font-weight:600;">' + formatMoney(o.toGive) + '</td>' +
+      '<td class="no-print">' +
+        '<button class="btn-edit" onclick="editOrder(' + o.id + ')" title="Редактировать">✎</button>' +
+        '<button class="btn-print" onclick="printOrder(' + o.id + ')" title="Печать">🖨</button>' +
+        '<button class="btn-danger" onclick="deleteOrder(' + o.id + ')" title="Удалить">✕</button>' +
+      '</td>';
     tbody.appendChild(tr);
   });
-
-  const total = orders.reduce((s, o) => s + (Number(o.totalAmount) || 0), 0);
-  const expense = orders.reduce((s, o) => s + (Number(o.expense) || 0), 0);
-  const profit = total - expense;
-
+  var total = orders.reduce(function(s, o) { return s + (Number(o.totalAmount) || 0); }, 0);
+  var expense = orders.reduce(function(s, o) { return s + (Number(o.expense) || 0); }, 0);
+  var profit = total - expense;
   document.getElementById('statCount').textContent = orders.length;
   document.getElementById('statTotal').textContent = formatMoney(total);
   document.getElementById('statExpense').textContent = formatMoney(expense);
@@ -542,33 +349,30 @@ function render() {
   document.getElementById('statProfit').style.color = profit >= 0 ? '#059669' : '#dc2626';
 }
 
-/* ============ МОДАЛКА СОЗДАНИЯ/РЕДАКТИРОВАНИЯ ============ */
 function openCreateModal() {
   document.getElementById('orderForm').reset();
   document.getElementById('editId').value = '';
   document.getElementById('toGive').value = '';
   document.getElementById('modalTitle').textContent = 'Новая заявка';
-  const now = new Date();
+  var now = new Date();
   now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
   document.getElementById('datetime').value = now.toISOString().slice(0,16);
   document.getElementById('orderModal').classList.add('active');
 }
 
-function closeModal() {
-  document.getElementById('orderModal').classList.remove('active');
-}
+function closeModal() { document.getElementById('orderModal').classList.remove('active'); }
 
-// Автоподсчёт "к сдаче"
-document.addEventListener('input', e => {
+document.addEventListener('input', function(e) {
   if (e.target.id === 'totalAmount' || e.target.id === 'expense') {
-    const total = parseFloat(document.getElementById('totalAmount').value) || 0;
-    const exp = parseFloat(document.getElementById('expense').value) || 0;
+    var total = parseFloat(document.getElementById('totalAmount').value) || 0;
+    var exp = parseFloat(document.getElementById('expense').value) || 0;
     document.getElementById('toGive').value = (total - exp).toFixed(2);
   }
 });
 
 function editOrder(id) {
-  const o = allOrders.find(x => x.id === id);
+  var o = null;
+  for (var i = 0; i < allOrders.length; i++) if (allOrders[i].id === id) { o = allOrders[i]; break; }
   if (!o) return;
   document.getElementById('editId').value = o.id;
   document.getElementById('clientName').value = o.clientName;
@@ -585,8 +389,8 @@ function editOrder(id) {
 
 function saveOrder(e) {
   e.preventDefault();
-  const editId = document.getElementById('editId').value;
-  const order = {
+  var editId = document.getElementById('editId').value;
+  var order = {
     id: editId ? Number(editId) : Date.now(),
     clientName: document.getElementById('clientName').value.trim(),
     clientPhone: document.getElementById('clientPhone').value.trim(),
@@ -599,9 +403,8 @@ function saveOrder(e) {
     updatedAt: Date.now(),
     updatedBy: currentUser.login
   };
-
   if (editId) {
-    allOrders = allOrders.map(o => o.id === order.id ? order : o);
+    allOrders = allOrders.map(function(o) { return o.id === order.id ? order : o; });
     toast('Заявка обновлена', 'success');
   } else {
     order.createdAt = Date.now();
@@ -609,7 +412,6 @@ function saveOrder(e) {
     allOrders.push(order);
     toast('Заявка добавлена', 'success');
   }
-
   saveOrders();
   closeModal();
   render();
@@ -617,110 +419,64 @@ function saveOrder(e) {
 
 function deleteOrder(id) {
   if (!confirm('Удалить заявку?')) return;
-  allOrders = allOrders.filter(o => o.id !== id);
+  allOrders = allOrders.filter(function(o) { return o.id !== id; });
   saveOrders();
   render();
   toast('Заявка удалена', 'success');
 }
 
-/* ============ ПЕЧАТЬ ОДНОЙ ЗАЯВКИ ============ */
 function printOrder(id) {
-  const o = allOrders.find(x => x.id === id);
+  var o = null;
+  for (var i = 0; i < allOrders.length; i++) if (allOrders[i].id === id) { o = allOrders[i]; break; }
   if (!o) return;
-  document.getElementById('printContent').innerHTML = `
-    <h3>Заявка №${o.id}</h3>
-    <div style="margin-top:16px; line-height:1.8;">
-      <div><b>Дата:</b> ${formatDate(o.datetime)}</div>
-      <div><b>Клиент:</b> ${escapeHtml(o.clientName)}</div>
-      <div><b>Телефон:</b> ${escapeHtml(o.clientPhone)}</div>
-      <div><b>Адрес:</b> ${escapeHtml(o.address)}</div>
-      <div><b>Статус:</b> ${o.status}</div>
-      <hr style="margin:12px 0;">
-      <div><b>Общая сумма:</b> ${formatMoney(o.totalAmount)}</div>
-      <div><b>Расход:</b> ${formatMoney(o.expense)}</div>
-      <div style="font-size:18px;"><b>К сдаче:</b> ${formatMoney(o.toGive)}</div>
-    </div>
-    <div style="display:flex; gap:8px; margin-top:24px;" class="no-print">
-      <button class="btn-primary" style="flex:1;" onclick="printCurrentModal()">🖨 Печать</button>
-      <button class="btn-secondary" onclick="document.getElementById('printModal').classList.remove('active')">Закрыть</button>
-    </div>
-  `;
+  document.getElementById('printContent').innerHTML =
+    '<h3>Заявка №' + o.id + '</h3>' +
+    '<div style="margin-top:16px; line-height:1.8;">' +
+      '<div><b>Дата:</b> ' + formatDate(o.datetime) + '</div>' +
+      '<div><b>Клиент:</b> ' + escapeHtml(o.clientName) + '</div>' +
+      '<div><b>Телефон:</b> ' + escapeHtml(o.clientPhone) + '</div>' +
+      '<div><b>Адрес:</b> ' + escapeHtml(o.address) + '</div>' +
+      '<div><b>Статус:</b> ' + o.status + '</div>' +
+      '<hr style="margin:12px 0;">' +
+      '<div><b>Общая сумма:</b> ' + formatMoney(o.totalAmount) + '</div>' +
+      '<div><b>Расход:</b> ' + formatMoney(o.expense) + '</div>' +
+      '<div style="font-size:18px;"><b>К сдаче:</b> ' + formatMoney(o.toGive) + '</div>' +
+    '</div>' +
+    '<div style="display:flex; gap:8px; margin-top:24px;" class="no-print">' +
+      '<button class="btn-primary" style="flex:1;" onclick="printCurrentModal()">🖨 Печать</button>' +
+      '<button class="btn-secondary" onclick="document.getElementById(\'printModal\').classList.remove(\'active\')">Закрыть</button>' +
+    '</div>';
   document.getElementById('printModal').classList.add('active');
 }
 
 function printCurrentModal() {
-  const content = document.getElementById('printContent').innerHTML;
-  const w = window.open('', '', 'width=600,height=700');
-  w.document.write(`<html><head><title>Заявка</title><style>
-    body{font-family:Arial;padding:20px;line-height:1.6;}
-    h3{margin-bottom:16px;}
-  </style></head><body>${content}</body></html>`);
+  var content = document.getElementById('printContent').innerHTML;
+  var w = window.open('', '', 'width=600,height=700');
+  w.document.write('<html><head><title>Заявка</title><style>body{font-family:Arial;padding:20px;line-height:1.6;}h3{margin-bottom:16px;}</style></head><body>' + content + '</body></html>');
   w.document.close();
   w.focus();
-  setTimeout(() => w.print(), 300);
+  setTimeout(function() { w.print(); }, 300);
 }
 
-/* ============ ЭКСПОРТ / ИМПОРТ ============ */
 function exportCSV() {
-  const orders = getFilteredOrders();
+  var orders = getFilteredOrders();
   if (orders.length === 0) return toast('Нет данных для экспорта', 'error');
-  const headers = ['ID','Дата','Имя','Телефон','Адрес','Статус','Сумма','Расход','К сдаче'];
-  const rows = orders.map(o => [
-    o.id, o.datetime, o.clientName, o.clientPhone, o.address, o.status,
-    o.totalAmount, o.expense, o.toGive
-  ]);
-  const csv = '\uFEFF' + [headers, ...rows]
-    .map(r => r.map(v => `"${String(v ?? '').replace(/"/g, '""')}"`).join(';'))
-    .join('\n');
-  downloadFile(csv, `orders_${Date.now()}.csv`, 'text/csv;charset=utf-8');
+  var headers = ['ID','Дата','Имя','Телефон','Адрес','Статус','Сумма','Расход','К сдаче'];
+  var rows = orders.map(function(o) {
+    return [o.id, o.datetime, o.clientName, o.clientPhone, o.address, o.status, o.totalAmount, o.expense, o.toGive];
+  });
+  var csv = '\uFEFF' + [headers].concat(rows).map(function(r) {
+    return r.map(function(v) { return '"' + String(v == null ? '' : v).replace(/"/g, '""') + '"'; }).join(';');
+  }).join('\n');
+  downloadFile(csv, 'orders_' + Date.now() + '.csv', 'text/csv;charset=utf-8');
   toast('CSV экспортирован', 'success');
 }
 
 function exportJSON() {
-  const data = JSON.stringify(allOrders, null, 2);
-  downloadFile(data, `orders_${Date.now()}.json`, 'application/json');
+  var data = JSON.stringify(allOrders, null, 2);
+  downloadFile(data, 'orders_' + Date.now() + '.json', 'application/json');
   toast('JSON экспортирован', 'success');
 }
 
 function importJSON(e) {
-  const file = e.target.files[0];
-  if (!file) return;
-  const reader = new FileReader();
-  reader.onload = ev => {
-    try {
-      const data = JSON.parse(ev.target.result);
-      if (!Array.isArray(data)) throw new Error('Не массив');
-      const existing = new Set(allOrders.map(o => o.id));
-      let added = 0;
-      data.forEach(o => {
-        if (!existing.has(o.id)) { allOrders.push(o); added++; }
-      });
-      saveOrders();
-      render();
-      toast(`Импортировано ${added} заявок`, 'success');
-    } catch (err) {
-      toast('Ошибка импорта: ' + err.message, 'error');
-    }
-  };
-  reader.readAsText(file);
-  e.target.value = '';
-}
-
-function downloadFile(content, filename, type) {
-  const blob = new Blob([content], { type });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url; a.download = filename;
-  document.body.appendChild(a);
-  a.click();
-  a.remove();
-  URL.revokeObjectURL(url);
-}
-
-/* ============ TOAST ============ */
-function toast(msg, type = '') {
-  const el = document.getElementById('toast');
-  el.textContent = msg;
-  el.className = 'toast show ' + type;
-  clearTimeout(el._t);
-  el._t = setTimeout(()
+  var file = e.target
