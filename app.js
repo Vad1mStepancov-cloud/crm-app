@@ -1,8 +1,8 @@
 /* =========================================================
-   CRM - Supabase, версия с бригадирами
+   CRM - Supabase, актуальная версия
    ========================================================= */
 
-var SUPABASE_URL = 'https://grohsnvinhidswzieuwo.supabase.co';
+var SUPABASE_URL = 'https://grohsnvinhidswiewo.supabase.co';
 var SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imdyb2hzbnZpbmhpZHN3emlldXdvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTAyNDA1MDcsImV4cCI6MjEwNTgxNjUwN30.bwAsw8BV-DUtpF23D1r1CTMJuvzejAQCi0qK2NfZScA';
 
 var currentUser = null;
@@ -50,12 +50,12 @@ function handleRegister(e) {
   e.preventDefault();
   var login = document.getElementById('regUser').value.trim();
   var pass = document.getElementById('regPass').value;
-  var role = document.getElementById('regRole').value;
+  var role = 'user';
   supa('/crm_users?login=eq.' + encodeURIComponent(login)).then(function(rows) {
     if (rows.length > 0) throw new Error('Пользователь уже существует');
     return supa('/crm_users', { method: 'POST', body: { login: login, password_hash: hashPassword(pass), role: role } });
   }).then(function() {
-    toast('Регистрация успешна!', 'success');
+    toast('Регистрация успешна! Теперь войдите.', 'success');
     switchAuth('login');
     document.getElementById('loginUser').value = login;
   }).catch(function(err) { toast(err.message, 'error'); });
@@ -70,15 +70,15 @@ function handleLogin(e) {
     var u = rows[0];
     if (u.password_hash !== hashPassword(pass)) throw new Error('Неверный пароль');
     currentUser = { login: u.login, role: u.role };
-    localStorage.setItem('crm_session', JSON.stringify(currentUser));
+    try { localStorage.setItem('crm_session', JSON.stringify(currentUser)); } catch (e) {}
     enterApp();
   }).catch(function(err) { toast(err.message, 'error'); });
 }
 
 function logout() {
-  if (!confirm('Выйти?')) return;
+  if (!confirm('Выйти из системы?')) return;
   currentUser = null;
-  localStorage.removeItem('crm_session');
+  try { localStorage.removeItem('crm_session'); } catch (e) {}
   document.getElementById('app').style.display = 'none';
   document.getElementById('authScreen').style.display = 'block';
 }
@@ -87,12 +87,13 @@ function enterApp() {
   document.getElementById('authScreen').style.display = 'none';
   document.getElementById('app').style.display = 'block';
   document.getElementById('currentUserName').textContent = currentUser.login + ' (' + currentUser.role + ')';
-  loadBrigadiers().then(loadOrders);
+  loadBrigadiers().then(function() { return loadOrders(); });
 }
 
 function checkSession() {
-  var s = localStorage.getItem('crm_session');
-  if (s) { try { currentUser = JSON.parse(s); enterApp(); } catch(e) {} }
+  var s = null;
+  try { s = localStorage.getItem('crm_session'); } catch (e) {}
+  if (s) { try { currentUser = JSON.parse(s); enterApp(); } catch (e) {} }
 }
 
 /* ============ ДАННЫЕ ============ */
@@ -100,7 +101,7 @@ function loadBrigadiers() {
   return supa('/crm_brigadiers?active=eq.true&order=name').then(function(rows) {
     allBrigadiers = rows;
     fillBrigadierSelects();
-  });
+  }).catch(function(err) { console.warn('Бригадиры не загружены:', err.message); });
 }
 
 function fillBrigadierSelects() {
@@ -136,27 +137,31 @@ function loadOrders() {
         totalAmount: Number(r.total_amount) || 0,
         expense: Number(r.expense) || 0,
         toGive: Number(r.to_give) || 0,
-        estimateAmount: Number(r.estimate_amount) || 0,
         advanceAmount: Number(r.advance_amount) || 0,
         note: r.note || ''
       };
     });
     render();
-    if (document.getElementById('page-brigadiers').style.display !== 'none') renderBrigadiers();
-    if (document.getElementById('page-analytics').style.display !== 'none') renderAnalytics();
-  });
+    if (document.getElementById('page-brigadiers') && document.getElementById('page-brigadiers').style.display !== 'none') renderBrigadiers();
+    if (document.getElementById('page-analytics') && document.getElementById('page-analytics').style.display !== 'none') renderAnalytics();
+  }).catch(function(err) { toast('Ошибка загрузки: ' + err.message, 'error'); });
 }
 
 /* ============ СТРАНИЦЫ ============ */
 function switchPage(name, btn) {
-  document.getElementById('page-orders').style.display = name === 'orders' ? 'block' : 'none';
-  document.getElementById('page-brigadiers').style.display = name === 'brigadiers' ? 'block' : 'none';
-  document.getElementById('page-analytics').style.display = name === 'analytics' ? 'block' : 'none';
-  document.querySelectorAll('.tab-btn').forEach(function(b) { b.classList.remove('active'); });
+  var ids = ['orders', 'brigadiers', 'analytics'];
+  ids.forEach(function(id) {
+    var el = document.getElementById('page-' + id);
+    if (el) el.style.display = id === name ? 'block' : 'none';
+  });
+  var btns = document.querySelectorAll('.tab-btn');
+  for (var i = 0; i < btns.length; i++) btns[i].classList.remove('active');
   if (btn) btn.classList.add('active');
   if (name === 'brigadiers') renderBrigadiers();
   if (name === 'analytics') renderAnalytics();
-}/* ============ ФИЛЬТРЫ ============ */
+}
+
+/* ============ ФИЛЬТРЫ ============ */
 function getFilteredOrders() {
   var elSearch = document.getElementById('searchInput');
   var elStatus = document.getElementById('filterStatus');
@@ -182,11 +187,10 @@ function getFilteredOrders() {
 }
 
 function resetFilters() {
-  document.getElementById('searchInput').value = '';
-  document.getElementById('filterStatus').value = '';
-  document.getElementById('filterType').value = '';
-  document.getElementById('filterBrigadier').value = '';
-  document.getElementById('filterSource').value = '';
+  ['searchInput', 'filterStatus', 'filterType', 'filterBrigadier', 'filterSource'].forEach(function(id) {
+    var el = document.getElementById(id);
+    if (el) el.value = '';
+  });
   render();
 }
 
@@ -201,7 +205,7 @@ function formatMoney(n) {
 }
 function escapeHtml(s) {
   return String(s || '').replace(/[&<>"']/g, function(c) {
-    return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];
+    return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
   });
 }
 
@@ -259,11 +263,16 @@ function render() {
   var signed = orders.filter(function(o) { return o.status === 'Подписан'; });
   var rejected = orders.filter(function(o) { return o.status === 'Отказ'; });
 
-  document.getElementById('statCount').textContent = orders.length;
-  document.getElementById('statTotal').textContent = formatMoney(active.reduce(function(s, o) { return s + o.totalAmount; }, 0));
-  document.getElementById('statSigned').textContent = formatMoney(signed.reduce(function(s, o) { return s + o.totalAmount; }, 0));
-  document.getElementById('statAdvance').textContent = formatMoney(orders.reduce(function(s, o) { return s + o.advanceAmount; }, 0));
-  document.getElementById('statRejected').textContent = rejected.length + ' шт';
+  var elCount = document.getElementById('statCount');
+  var elTotal = document.getElementById('statTotal');
+  var elSigned = document.getElementById('statSigned');
+  var elAdvance = document.getElementById('statAdvance');
+  var elRejected = document.getElementById('statRejected');
+  if (elCount) elCount.textContent = orders.length;
+  if (elTotal) elTotal.textContent = formatMoney(active.reduce(function(s, o) { return s + o.totalAmount; }, 0));
+  if (elSigned) elSigned.textContent = formatMoney(signed.reduce(function(s, o) { return s + o.totalAmount; }, 0));
+  if (elAdvance) elAdvance.textContent = formatMoney(orders.reduce(function(s, o) { return s + o.advanceAmount; }, 0));
+  if (elRejected) elRejected.textContent = rejected.length + ' шт';
 }
 
 /* ============ МОДАЛКА ЗАЯВКИ ============ */
@@ -273,7 +282,7 @@ function openCreateModal() {
   document.getElementById('modalTitle').textContent = 'Новая заявка';
   var now = new Date();
   now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
-  document.getElementById('datetime').value = now.toISOString().slice(0,16);
+  document.getElementById('datetime').value = now.toISOString().slice(0, 16);
   document.getElementById('orderModal').classList.add('active');
 }
 function closeModal() { document.getElementById('orderModal').classList.remove('active'); }
@@ -322,7 +331,6 @@ function saveOrder(e) {
     source: document.getElementById('source').value,
     status: document.getElementById('status').value,
     total_amount: t,
-    estimate_amount: t,
     advance_amount: parseFloat(document.getElementById('advanceAmount').value) || 0,
     expense: ex,
     to_give: t - ex,
@@ -343,13 +351,15 @@ function saveOrder(e) {
 function deleteOrder(id) {
   if (!confirm('Удалить заявку?')) return;
   supa('/crm_orders?id=eq.' + id, { method: 'DELETE' }).then(function() {
-    toast('Удалено', 'success'); loadOrders();
+    toast('Удалено', 'success');
+    loadOrders();
   }).catch(function(err) { toast('Ошибка: ' + err.message, 'error'); });
 }
 
 /* ============ БРИГАДИРЫ ============ */
 function renderBrigadiers() {
   var tbody = document.getElementById('brigadiersTable');
+  if (!tbody) return;
   tbody.innerHTML = '';
   allBrigadiers.forEach(function(b) {
     var orders = allOrders.filter(function(o) { return o.brigadier === b.name; });
@@ -414,6 +424,7 @@ function deleteBrigadier(id) {
 
 /* ============ АНАЛИТИКА ============ */
 function renderAnalytics() {
+  if (!document.getElementById('anaCount')) return;
   var total = allOrders.filter(function(o) { return o.status !== 'Отказ'; })
     .reduce(function(s, o) { return s + o.totalAmount; }, 0);
   var signed = allOrders.filter(function(o) { return o.status === 'Подписан'; })
@@ -435,15 +446,14 @@ function renderAnalytics() {
     });
     return map;
   }
-
   function renderGroup(id, map) {
     var el = document.getElementById(id);
+    if (!el) return;
     var keys = Object.keys(map).sort(function(a, b) { return map[b].sum - map[a].sum; });
     el.innerHTML = keys.map(function(k) {
       return '<div class="ana-row"><span>' + escapeHtml(k) + ' (' + map[k].count + ')</span><b>' + formatMoney(map[k].sum) + '</b></div>';
     }).join('') || '<div style="color:#999;">Нет данных</div>';
   }
-
   renderGroup('anaSources', groupBy('source'));
   renderGroup('anaBrigadiers', groupBy('brigadier'));
   renderGroup('anaTypes', groupBy('orderType'));
@@ -453,7 +463,7 @@ function renderAnalytics() {
 function exportCSV() {
   var orders = getFilteredOrders();
   if (!orders.length) { toast('Нет данных', 'error'); return; }
-  var headers = ['Дата','Тип','Клиент','Телефон','Адрес','Бригадир','Источник','Статус','Смета','Аванс','Заметка'];
+  var headers = ['Дата', 'Тип', 'Клиент', 'Телефон', 'Адрес', 'Бригадир', 'Источник', 'Статус', 'Смета', 'Аванс', 'Заметка'];
   var rows = orders.map(function(o) {
     return [o.datetime, o.orderType, o.clientName, o.clientPhone, o.address, o.brigadier, o.source, o.status, o.totalAmount, o.advanceAmount, o.note];
   });
@@ -471,6 +481,7 @@ function exportCSV() {
 function toast(msg, type) {
   type = type || '';
   var el = document.getElementById('toast');
+  if (!el) return;
   el.textContent = msg;
   el.className = 'toast show ' + type;
   clearTimeout(el._t);
