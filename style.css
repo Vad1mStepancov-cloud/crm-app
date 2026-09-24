@@ -58,3 +58,28 @@ tr:hover { background: #f9fafb; }
 .toast.error { background: #dc2626; }
 .actions-bar { display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap; }
 @media (max-width: 600px) { h1 { font-size: 18px; } .stat-value { font-size: 18px; } body { padding: 10px; } }
+/* НОВЫЕ СТИЛИ */
+.tabs-bar { display: flex; gap: 6px; margin-bottom: 16px; background: #fff; padding: 6px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
+.tab-btn { flex: 1; padding: 10px; background: transparent; border: none; border-radius: 8px; cursor: pointer; font-size: 14px; color: #666; }
+.tab-btn.active { background: #4f46e5; color: #fff; font-weight: 600; }
+
+.status-принят { background: #dbeafe; color: #1e40af; }
+.status-смета { background: #fef3c7; color: #92400e; }
+.status-подписан { background: #d1fae5; color: #065f46; }
+.status-отказ { background: #fee2e2; color: #991b1b; }
+
+.card { background: #fff; border-radius: 12px; padding: 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); margin-bottom: 12px; }
+.card h3 { font-size: 15px; margin-bottom: 12px; color: #1a1a2e; }
+.ana-row { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #f3f4f6; font-size: 14px; }
+
+.mobile-nav { display: none; }
+
+@media (max-width: 768px) {
+  .summary { grid-template-columns: repeat(2, 1fr); }
+  .tabs-bar { overflow-x: auto; }
+  .tab-btn { font-size: 13px; padding: 8px; white-space: nowrap; }
+  .mobile-nav { display: flex; position: fixed; bottom: 0; left: 0; right: 0; background: #fff; padding: 10px; box-shadow: 0 -2px 12px rgba(0,0,0,0.1); gap: 8px; z-index: 50; }
+  .mobile-nav button { flex: 1; padding: 12px; font-size: 13px; background: #f3f4f6; color: #333; border-radius: 10px; }
+  .mobile-nav .mnav-main { background: #4f46e5; color: #fff; font-weight: 600; }
+  body { padding-bottom: 80px; }
+}
