@@ -58,6 +58,15 @@ tr:hover { background: #f9fafb; }
 .toast.error { background: #dc2626; }
 .actions-bar { display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap; }
 @media (max-width: 600px) { h1 { font-size: 18px; } .stat-value { font-size: 18px; } body { padding: 10px; } }
+/* Показываем таблицу только на широком экране */
+.desktop-only { display: block; }
+.mobile-only { display: none; }
+
+/* На узком экране — наоборот */
+@media (max-width: 768px) {
+  .desktop-only { display: none !important; }
+  .mobile-only { display: block !important; }
+}
 /* НОВЫЕ СТИЛИ */
 .tabs-bar { display: flex; gap: 6px; margin-bottom: 16px; background: #fff; padding: 6px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
 .tab-btn { flex: 1; padding: 10px; background: transparent; border: none; border-radius: 8px; cursor: pointer; font-size: 14px; color: #666; }
@@ -72,7 +81,6 @@ tr:hover { background: #f9fafb; }
 .card h3 { font-size: 15px; margin-bottom: 12px; color: #1a1a2e; }
 .ana-row { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #f3f4f6; font-size: 14px; }
 
-.mobile-nav { display: none; }
 
 @media (max-width: 768px) {
   .summary { grid-template-columns: repeat(2, 1fr); }
