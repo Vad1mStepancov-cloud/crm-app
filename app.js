@@ -1,12 +1,14 @@
 /* =========================================================
-   CRM - Supabase, актуальная версия
+   CRM - Supabase, версия с сотрудниками
    ========================================================= */
 
 var SUPABASE_URL = 'https://grohsnvinhidswzieuwo.supabase.co';
-var SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imdyb2hzbnZpbmhpZHN3emlldXdvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTAyNDA1MDcsImV4cCI6MjEwNTgxNjUwN30.bwAsw8BV-DUtpF23D1r1CTMJuvzejAQCi0qK2NfZScA'
+var SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imdyb2hzbnZpbmhpZHN3emlldXdvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTAyNDA1MDcsImV4cCI6MjEwNTgxNjUwN30.bwAsw8BV-DUtpF23D1r1CTMJuvzejAQCi0qK2NfZScA';
+
 var currentUser = null;
 var allOrders = [];
 var allBrigadiers = [];
+var allUsers = [];
 
 /* ============ API ============ */
 function supa(path, options) {
@@ -137,18 +139,26 @@ function loadOrders() {
         expense: Number(r.expense) || 0,
         toGive: Number(r.to_give) || 0,
         advanceAmount: Number(r.advance_amount) || 0,
-        note: r.note || ''
+        note: r.note || '',
+        createdBy: r.created_by || ''
       };
     });
     render();
     if (document.getElementById('page-brigadiers') && document.getElementById('page-brigadiers').style.display !== 'none') renderBrigadiers();
     if (document.getElementById('page-analytics') && document.getElementById('page-analytics').style.display !== 'none') renderAnalytics();
+    if (document.getElementById('page-users') && document.getElementById('page-users').style.display !== 'none') renderUsers();
   }).catch(function(err) { toast('Ошибка загрузки: ' + err.message, 'error'); });
+}
+
+function loadUsers() {
+  return supa('/crm_users?order=created_at.desc').then(function(rows) {
+    allUsers = rows;
+  }).catch(function(err) { toast('Ошибка загрузки пользователей: ' + err.message, 'error'); });
 }
 
 /* ============ СТРАНИЦЫ ============ */
 function switchPage(name, btn) {
-  var ids = ['orders', 'brigadiers', 'analytics'];
+  var ids = ['orders', 'brigadiers', 'analytics', 'users'];
   ids.forEach(function(id) {
     var el = document.getElementById('page-' + id);
     if (el) el.style.display = id === name ? 'block' : 'none';
@@ -158,6 +168,7 @@ function switchPage(name, btn) {
   if (btn) btn.classList.add('active');
   if (name === 'brigadiers') renderBrigadiers();
   if (name === 'analytics') renderAnalytics();
+  if (name === 'users') loadUsers().then(renderUsers);
 }
 
 /* ============ ФИЛЬТРЫ ============ */
@@ -418,6 +429,65 @@ function deleteBrigadier(id) {
   supa('/crm_brigadiers?id=eq.' + id, { method: 'DELETE' }).then(function() {
     toast('Удалено', 'success');
     loadBrigadiers().then(renderBrigadiers);
+  }).catch(function(err) { toast('Ошибка: ' + err.message, 'error'); });
+}
+
+/* ============ СОТРУДНИКИ ============ */
+function renderUsers() {
+  var tbody = document.getElementById('usersTable');
+  if (!tbody) return;
+  tbody.innerHTML = '';
+  if (allUsers.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; padding:20px; color:#999;">Пока никто не зарегистрировался</td></tr>';
+    return;
+  }
+  allUsers.forEach(function(u) {
+    var userOrders = allOrders.filter(function(o) { return o.createdBy === u.login; });
+    var sum = userOrders.reduce(function(s, o) { return s + o.totalAmount; }, 0);
+    var isMe = currentUser && currentUser.login === u.login;
+    var isAdmin = currentUser && currentUser.role === 'admin';
+    var tr = document.createElement('tr');
+    tr.innerHTML =
+      '<td><strong>' + escapeHtml(u.login) + '</strong>' + (isMe ? ' <span style="color:#888; font-size:11px;">(вы)</span>' : '') + '</td>' +
+      '<td>' + (u.role === 'admin' ? '👑 Администратор' : '👤 Пользователь') + '</td>' +
+      '<td>' + formatDate(u.created_at) + '</td>' +
+      '<td>' + userOrders.length + '</td>' +
+      '<td>' + formatMoney(sum) + '</td>' +
+      '<td>' + (isAdmin && !isMe
+        ? '<button class="btn-edit" onclick="toggleUserRole(' + u.id + ', \'' + u.role + '\')" title="Сменить роль">⇄</button>' +
+          '<button class="btn-edit" onclick="resetUserPassword(' + u.id + ', \'' + escapeHtml(u.login) + '\')" title="Сбросить пароль">🔑</button>' +
+          '<button class="btn-danger" onclick="deleteUser(' + u.id + ', \'' + escapeHtml(u.login) + '\')" title="Удалить">✕</button>'
+        : '<span style="color:#aaa; font-size:12px;">—</span>') + '</td>';
+    tbody.appendChild(tr);
+  });
+}
+
+function toggleUserRole(id, role) {
+  if (!currentUser || currentUser.role !== 'admin') { toast('Только админ может менять роли', 'error'); return; }
+  var newRole = role === 'admin' ? 'user' : 'admin';
+  var msg = newRole === 'admin' ? 'Сделать администратором?' : 'Снять права администратора?';
+  if (!confirm(msg)) return;
+  supa('/crm_users?id=eq.' + id, { method: 'PATCH', body: { role: newRole } }).then(function() {
+    toast('Роль изменена', 'success');
+    loadUsers().then(renderUsers);
+  }).catch(function(err) { toast('Ошибка: ' + err.message, 'error'); });
+}
+
+function resetUserPassword(id, login) {
+  if (!currentUser || currentUser.role !== 'admin') { toast('Только админ', 'error'); return; }
+  var newPass = prompt('Новый пароль для «' + login + '»:', '');
+  if (!newPass || newPass.length < 4) { toast('Пароль минимум 4 символа', 'error'); return; }
+  supa('/crm_users?id=eq.' + id, { method: 'PATCH', body: { password_hash: hashPassword(newPass) } }).then(function() {
+    toast('Пароль обновлён', 'success');
+  }).catch(function(err) { toast('Ошибка: ' + err.message, 'error'); });
+}
+
+function deleteUser(id, login) {
+  if (!currentUser || currentUser.role !== 'admin') { toast('Только админ', 'error'); return; }
+  if (!confirm('Удалить сотрудника «' + login + '»?')) return;
+  supa('/crm_users?id=eq.' + id, { method: 'DELETE' }).then(function() {
+    toast('Удалён', 'success');
+    loadUsers().then(renderUsers);
   }).catch(function(err) { toast('Ошибка: ' + err.message, 'error'); });
 }
 
